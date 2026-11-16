@@ -59,6 +59,7 @@ tokens = (
 
     # Ciclos
     "REPETIR",
+    "MIENTRAS",
 
     # Simbolos
     "PARIZQ",
@@ -328,6 +329,19 @@ def p_instruccion_repetir(p):
         "instrucciones": p[6]
     }
 
+    # CICLO MIENTRAS
+
+def p_instruccion_mientras(p):
+    """
+    instruccion : MIENTRAS PARIZQ valor PARDER LLAVEIZQ instrucciones LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "mientras",
+        "condicion": p[3],
+        "instrucciones": p[6]
+    }
+
 
 # ==========================================
 # 16. ERRORES SINTACTICOS
@@ -455,6 +469,19 @@ def mostrar_instruccion(instruccion, nivel=0):
             mostrar_instruccion(item, nivel + 1)
 
 
+    # CICLO MIENTRAS
+    elif tipo == "mientras":
+
+        print(
+            f"{espacio}Ciclo MIENTRAS: "
+            f"{mostrar_valor(instruccion['condicion'])}"
+        )
+
+        for item in instruccion["instrucciones"]:
+            mostrar_instruccion(item, nivel + 1)
+
+
+
 # ==========================================
 # 20. CODIGO DE PRUEBA DE JARVIS
 # ==========================================
@@ -494,6 +521,15 @@ sistema StarkLab {
         }
 
         imprimir("Escaneo terminado");
+        
+        
+var contador: entero = 3;
+
+mientras (contador > 0) {
+    imprimir(contador);
+    contador -= 1;
+}
+
     }
 }
 '''
