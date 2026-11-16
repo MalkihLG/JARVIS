@@ -225,6 +225,38 @@ class EjecutorJARVIS:
                 for elemento in instruccion["instrucciones"]:
                     self.ejecutar_instruccion(elemento)
 
+
+        # CICLO MIENTRAS
+        elif tipo == "mientras":
+
+            iteraciones = 0
+
+            while True:
+
+                condicion = self.evaluar(
+                    instruccion["condicion"]
+                )
+
+                if not isinstance(condicion, bool):
+                    raise TypeError(
+                        "La condicion MIENTRAS debe ser logica"
+                    )
+
+                if not condicion:
+                    break
+
+                # Evitar ciclos infinitos
+                iteraciones += 1
+
+                if iteraciones > 10000:
+                    raise ValueError(
+                        "MIENTRAS supero el limite de 10000 repeticiones"
+                    )
+
+                for elemento in instruccion["instrucciones"]:
+                    self.ejecutar_instruccion(elemento)
+
+
         # OTRAS INSTRUCCIONES
 
         else:

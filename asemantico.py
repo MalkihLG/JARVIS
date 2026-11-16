@@ -227,10 +227,28 @@ def analizar_instruccion(instruccion):
         for elemento in instruccion["instrucciones"]:
             analizar_instruccion(elemento)
 
+
+    # CICLO MIENTRAS
+    elif tipo == "mientras":
+
+        tipo_condicion = obtener_tipo(
+            instruccion["condicion"]
+        )
+
+        if tipo_condicion != "logico":
+            raise ErrorSemantico(
+                "La condicion MIENTRAS debe ser logica"
+            )
+
+        for elemento in instruccion["instrucciones"]:
+            analizar_instruccion(elemento)
+
+
     else:
         raise ErrorSemantico(
             f"Instruccion no implementada: {tipo}"
         )
+
 
 
 # 5. ANALIZAR PROGRAMA COMPLETO
