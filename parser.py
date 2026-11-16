@@ -4,59 +4,98 @@ from lexer import lexer
 
 # ==========================================
 # JARVIS - ANALIZADOR SINTACTICO
-# ETAPA 4: VARIABLES, OPERACIONES Y DECISIONES
+# ETAPA 6: VARIABLES, OPERACIONES,
+# DECISIONES, CICLOS Y ASIGNACIONES
 # ==========================================
 
+
+# 1. TOKENS UTILIZADOS EN LA GRAMATICA
+
 tokens = (
+    # Estructura del programa
     "SISTEMA",
-    "IDENTIFICADOR",
-    "LLAVEIZQ",
-    "LLAVEDER",
     "MISION",
     "PRINCIPAL",
-    "IMPRIMIR",
-    "PARIZQ",
-    "PARDER",
-    "CADENA",
-    "NUMERO",
-    "PUNTOYCOMA",
+    "IDENTIFICADOR",
+
+    # Variables y tipos
     "VAR",
-    "DOSPUNTOS",
-    "ASIGNAR",
     "ENTERO",
     "DECIMAL",
     "CADENITA",
     "LOGICO",
+    "NUMERO",
+    "CADENA",
     "SI_PASO",
     "NO_PASO",
+
+    # Entrada y salida
+    "IMPRIMIR",
+
+    # Operadores matematicos
     "SUMA",
     "RESTA",
     "MULTIPLICACION",
     "DIVISION",
-    "SI",
-    "SINO",
+
+    # Comparaciones
     "IGUAL",
     "DIFERENTE",
     "MAYOR",
     "MENOR",
     "MAYORIGUAL",
     "MENORIGUAL",
+
+    # Asignaciones
+    "ASIGNAR",
+    "MASIGUAL",
+    "MENOSIGUAL",
+    "PORIGUAL",
+    "DIVIGUAL",
+
+    # Decisiones
+    "SI",
+    "SINO",
+
+    # Ciclos
+    "REPETIR",
+
+    # Simbolos
+    "PARIZQ",
+    "PARDER",
+    "LLAVEIZQ",
+    "LLAVEDER",
+    "PUNTOYCOMA",
+    "DOSPUNTOS",
 )
 
-# PRIORIDAD DE OPERACIONES
+
+# 2. PRIORIDAD DE OPERADORES
 
 precedence = (
-    ("nonassoc", "IGUAL", "DIFERENTE",
-     "MAYOR", "MENOR", "MAYORIGUAL", "MENORIGUAL"),
+    (
+        "nonassoc",
+        "IGUAL",
+        "DIFERENTE",
+        "MAYOR",
+        "MENOR",
+        "MAYORIGUAL",
+        "MENORIGUAL"
+    ),
     ("left", "SUMA", "RESTA"),
     ("left", "MULTIPLICACION", "DIVISION"),
 )
 
 
-# 1. SISTEMA
+# ==========================================
+# 3. ESTRUCTURA DEL SISTEMA
+# ==========================================
 
 def p_programa(p):
-    """programa : SISTEMA IDENTIFICADOR LLAVEIZQ mision LLAVEDER"""
+    """
+    programa : SISTEMA IDENTIFICADOR LLAVEIZQ mision LLAVEDER
+    """
+
     p[0] = {
         "tipo": "sistema",
         "nombre": p[2],
@@ -64,10 +103,15 @@ def p_programa(p):
     }
 
 
-# 2. MISION PRINCIPAL
+# ==========================================
+# 4. MISION PRINCIPAL
+# ==========================================
 
 def p_mision(p):
-    """mision : MISION PRINCIPAL LLAVEIZQ instrucciones LLAVEDER"""
+    """
+    mision : MISION PRINCIPAL LLAVEIZQ instrucciones LLAVEDER
+    """
+
     p[0] = {
         "tipo": "mision",
         "nombre": "principal",
@@ -75,22 +119,35 @@ def p_mision(p):
     }
 
 
-# 3. LISTA DE INSTRUCCIONES
+# ==========================================
+# 5. LISTA DE INSTRUCCIONES
+# ==========================================
 
 def p_instrucciones_varias(p):
-    """instrucciones : instrucciones instruccion"""
+    """
+    instrucciones : instrucciones instruccion
+    """
+
     p[0] = p[1] + [p[2]]
 
 
 def p_instrucciones_una(p):
-    """instrucciones : instruccion"""
+    """
+    instrucciones : instruccion
+    """
+
     p[0] = [p[1]]
 
 
-# 4. VARIABLES
+# ==========================================
+# 6. DECLARACION DE VARIABLES
+# ==========================================
 
 def p_instruccion_variable(p):
-    """instruccion : VAR IDENTIFICADOR DOSPUNTOS tipo ASIGNAR valor PUNTOYCOMA"""
+    """
+    instruccion : VAR IDENTIFICADOR DOSPUNTOS tipo ASIGNAR valor PUNTOYCOMA
+    """
+
     p[0] = {
         "tipo": "variable",
         "nombre": p[2],
@@ -99,24 +156,54 @@ def p_instruccion_variable(p):
     }
 
 
-# 5. TIPOS DE DATOS
+# ==========================================
+# 7. ACTUALIZACION DE VARIABLES
+# ==========================================
+
+def p_instruccion_actualizar(p):
+    """
+    instruccion : IDENTIFICADOR ASIGNAR valor PUNTOYCOMA
+                | IDENTIFICADOR MASIGUAL valor PUNTOYCOMA
+                | IDENTIFICADOR MENOSIGUAL valor PUNTOYCOMA
+                | IDENTIFICADOR PORIGUAL valor PUNTOYCOMA
+                | IDENTIFICADOR DIVIGUAL valor PUNTOYCOMA
+    """
+
+    p[0] = {
+        "tipo": "asignacion",
+        "nombre": p[1],
+        "operador": p[2],
+        "valor": p[3]
+    }
+
+
+# ==========================================
+# 8. TIPOS DE DATOS
+# ==========================================
 
 def p_tipo(p):
-    """tipo : ENTERO
-            | DECIMAL
-            | CADENITA
-            | LOGICO"""
+    """
+    tipo : ENTERO
+         | DECIMAL
+         | CADENITA
+         | LOGICO
+    """
+
     p[0] = p[1]
 
 
-# 6. VALORES
+# ==========================================
+# 9. VALORES
+# ==========================================
 
 def p_valor(p):
-    """valor : CADENA
-             | NUMERO
-             | SI_PASO
-             | NO_PASO
-             | IDENTIFICADOR"""
+    """
+    valor : CADENA
+          | NUMERO
+          | SI_PASO
+          | NO_PASO
+          | IDENTIFICADOR
+    """
 
     if p.slice[1].type == "CADENA":
         p[0] = p[1][1:-1]
@@ -124,13 +211,17 @@ def p_valor(p):
         p[0] = p[1]
 
 
-# 7. OPERACIONES MATEMATICAS
+# ==========================================
+# 10. OPERACIONES MATEMATICAS
+# ==========================================
 
 def p_valor_operacion(p):
-    """valor : valor SUMA valor
-             | valor RESTA valor
-             | valor MULTIPLICACION valor
-             | valor DIVISION valor"""
+    """
+    valor : valor SUMA valor
+          | valor RESTA valor
+          | valor MULTIPLICACION valor
+          | valor DIVISION valor
+    """
 
     p[0] = {
         "tipo": "operacion",
@@ -140,15 +231,19 @@ def p_valor_operacion(p):
     }
 
 
-# 8. COMPARACIONES
+# ==========================================
+# 11. COMPARACIONES
+# ==========================================
 
 def p_valor_comparacion(p):
-    """valor : valor IGUAL valor
-             | valor DIFERENTE valor
-             | valor MAYOR valor
-             | valor MENOR valor
-             | valor MAYORIGUAL valor
-             | valor MENORIGUAL valor"""
+    """
+    valor : valor IGUAL valor
+          | valor DIFERENTE valor
+          | valor MAYOR valor
+          | valor MENOR valor
+          | valor MAYORIGUAL valor
+          | valor MENORIGUAL valor
+    """
 
     p[0] = {
         "tipo": "comparacion",
@@ -158,17 +253,26 @@ def p_valor_comparacion(p):
     }
 
 
-# 9. PARENTESIS
+# ==========================================
+# 12. EXPRESIONES CON PARENTESIS
+# ==========================================
 
 def p_valor_parentesis(p):
-    """valor : PARIZQ valor PARDER"""
+    """
+    valor : PARIZQ valor PARDER
+    """
+
     p[0] = p[2]
 
 
-# 10. IMPRIMIR
+# ==========================================
+# 13. INSTRUCCION IMPRIMIR
+# ==========================================
 
 def p_instruccion_imprimir(p):
-    """instruccion : IMPRIMIR PARIZQ valor PARDER PUNTOYCOMA"""
+    """
+    instruccion : IMPRIMIR PARIZQ valor PARDER PUNTOYCOMA
+    """
 
     p[0] = {
         "tipo": "imprimir",
@@ -176,10 +280,14 @@ def p_instruccion_imprimir(p):
     }
 
 
-# 11. DECISION SI / SINO
+# ==========================================
+# 14. CONDICIONES SI Y SINO
+# ==========================================
 
 def p_instruccion_si(p):
-    """instruccion : SI PARIZQ valor PARDER LLAVEIZQ instrucciones LLAVEDER opcion_sino"""
+    """
+    instruccion : SI PARIZQ valor PARDER LLAVEIZQ instrucciones LLAVEDER opcion_sino
+    """
 
     p[0] = {
         "tipo": "si",
@@ -189,21 +297,44 @@ def p_instruccion_si(p):
     }
 
 
-# 12. BLOQUE SINO OPCIONAL
-
 def p_opcion_sino(p):
-    """opcion_sino : SINO LLAVEIZQ instrucciones LLAVEDER"""
+    """
+    opcion_sino : SINO LLAVEIZQ instrucciones LLAVEDER
+    """
+
     p[0] = p[3]
 
 
 def p_opcion_sino_vacio(p):
-    """opcion_sino :"""
+    """
+    opcion_sino :
+    """
+
     p[0] = []
 
 
-# 13. ERRORES SINTACTICOS
+# ==========================================
+# 15. CICLO REPETIR
+# ==========================================
+
+def p_instruccion_repetir(p):
+    """
+    instruccion : REPETIR PARIZQ valor PARDER LLAVEIZQ instrucciones LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "repetir",
+        "cantidad": p[3],
+        "instrucciones": p[6]
+    }
+
+
+# ==========================================
+# 16. ERRORES SINTACTICOS
+# ==========================================
 
 def p_error(p):
+
     if p:
         raise SyntaxError(
             f"Error sintactico en linea {p.lineno}: "
@@ -215,7 +346,9 @@ def p_error(p):
     )
 
 
-# 14. CREAR ANALIZADOR
+# ==========================================
+# 17. CREAR ANALIZADOR SINTACTICO
+# ==========================================
 
 parser = yacc.yacc(
     start="programa",
@@ -224,15 +357,26 @@ parser = yacc.yacc(
 )
 
 
-# 15. MOSTRAR EXPRESIONES
+# ==========================================
+# 18. MOSTRAR EXPRESIONES
+# ==========================================
 
 def mostrar_valor(valor):
 
     if isinstance(valor, dict):
-        if valor.get("tipo") in ("operacion", "comparacion"):
 
-            izquierda = mostrar_valor(valor["izquierda"])
-            derecha = mostrar_valor(valor["derecha"])
+        if valor.get("tipo") in (
+            "operacion",
+            "comparacion"
+        ):
+
+            izquierda = mostrar_valor(
+                valor["izquierda"]
+            )
+
+            derecha = mostrar_valor(
+                valor["derecha"]
+            )
 
             return (
                 f"({izquierda} "
@@ -243,13 +387,17 @@ def mostrar_valor(valor):
     return str(valor)
 
 
-# 16. MOSTRAR INSTRUCCIONES
+# ==========================================
+# 19. MOSTRAR INSTRUCCIONES
+# ==========================================
 
 def mostrar_instruccion(instruccion, nivel=0):
 
     espacio = "    " * nivel
+    tipo = instruccion["tipo"]
 
-    if instruccion["tipo"] == "variable":
+    # VARIABLES
+    if tipo == "variable":
 
         print(
             f"{espacio}Variable: {instruccion['nombre']} | "
@@ -257,14 +405,26 @@ def mostrar_instruccion(instruccion, nivel=0):
             f"Valor: {mostrar_valor(instruccion['valor'])}"
         )
 
-    elif instruccion["tipo"] == "imprimir":
+    # ACTUALIZACION DE VARIABLES
+    elif tipo == "asignacion":
+
+        print(
+            f"{espacio}Actualizar: "
+            f"{instruccion['nombre']} "
+            f"{instruccion['operador']} "
+            f"{mostrar_valor(instruccion['valor'])}"
+        )
+
+    # IMPRIMIR
+    elif tipo == "imprimir":
 
         print(
             f"{espacio}Imprimir: "
             f"{mostrar_valor(instruccion['mensaje'])}"
         )
 
-    elif instruccion["tipo"] == "si":
+    # CONDICIONES
+    elif tipo == "si":
 
         print(
             f"{espacio}Condicion SI: "
@@ -283,8 +443,21 @@ def mostrar_instruccion(instruccion, nivel=0):
             for item in instruccion["instrucciones_sino"]:
                 mostrar_instruccion(item, nivel + 1)
 
+    # CICLO REPETIR
+    elif tipo == "repetir":
 
-# 17. CODIGO DE PRUEBA JARVIS
+        print(
+            f"{espacio}Ciclo REPETIR: "
+            f"{mostrar_valor(instruccion['cantidad'])} veces"
+        )
+
+        for item in instruccion["instrucciones"]:
+            mostrar_instruccion(item, nivel + 1)
+
+
+# ==========================================
+# 20. CODIGO DE PRUEBA DE JARVIS
+# ==========================================
 
 codigo = '''
 sistema StarkLab {
@@ -293,6 +466,10 @@ sistema StarkLab {
 
         var heroe: cadenita = "Iron Man";
         var energia: entero = 100;
+
+        energia -= 25;
+        energia += 10;
+
         var armaduraLista: logico = si paso;
         var enemigos: logico = no paso;
 
@@ -311,19 +488,36 @@ sistema StarkLab {
         si (armaduraLista == si paso) {
             imprimir("Sistema preparado");
         }
+
+        repetir (3) {
+            imprimir("Escaneando la ciudad...");
+        }
+
+        imprimir("Escaneo terminado");
     }
 }
 '''
 
 
-# 18. EJECUTAR ANALISIS
+# ==========================================
+# 21. EJECUTAR ANALISIS SINTACTICO
+# ==========================================
 
 if __name__ == "__main__":
 
     lexer.lineno = 1
 
     try:
-        resultado = parser.parse(codigo, lexer=lexer)
+
+        resultado = parser.parse(
+            codigo,
+            lexer=lexer
+        )
+
+        if resultado is None:
+            raise SyntaxError(
+                "No se pudo construir el AST"
+            )
 
         print("========== JARVIS ==========")
         print("Analisis sintactico correcto")
@@ -337,4 +531,6 @@ if __name__ == "__main__":
             mostrar_instruccion(instruccion)
 
     except SyntaxError as error:
+
+        print("========== ERROR JARVIS ==========")
         print(error)
