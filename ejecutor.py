@@ -1,8 +1,9 @@
 
 # ==========================================
 # JARVIS - EJECUTOR DE PROGRAMAS
-# ETAPA 3: VARIABLES, ASIGNACIONES,
-# OPERACIONES, DECISIONES Y CICLOS
+# ETAPA 4: VARIABLES, OPERACIONES,
+# ASIGNACIONES, DECISIONES, CICLOS
+# Y FUNCIONES ACCION
 # ==========================================
 
 from lexer import lexer
@@ -12,12 +13,19 @@ from asemantico import analizar_programa, ErrorSemantico
 
 class EjecutorJARVIS:
 
+    # ======================================
     # 1. INICIALIZAR EJECUTOR
+    # ======================================
 
     def __init__(self):
-        self.variables = {}
 
+        self.variables = {}
+        self.acciones = {}
+        self.pila_acciones = []
+
+    # ======================================
     # 2. EVALUAR EXPRESIONES
+    # ======================================
 
     def evaluar(self, expresion):
 
@@ -79,7 +87,7 @@ class EjecutorJARVIS:
                 f"Expresion no implementada: {tipo}"
             )
 
-        # VALORES LOGICOS MEXICANOS
+        # VALORES LOGICOS DE JARVIS
 
         if isinstance(expresion, str):
 
@@ -90,15 +98,17 @@ class EjecutorJARVIS:
                 return False
 
             # CONSULTAR VARIABLES
-
             if expresion in self.variables:
                 return self.variables[expresion]
 
+            # CADENAS LITERALES
             return expresion
 
         return expresion
 
-    # 3. CONVERTIR RESULTADOS PARA MOSTRARLOS
+    # ======================================
+    # 3. CONVERTIR VALORES
+    # ======================================
 
     def convertir_salida(self, valor):
 
@@ -110,13 +120,62 @@ class EjecutorJARVIS:
 
         return str(valor)
 
-    # 4. EJECUTAR INSTRUCCIONES
+    # ======================================
+    # 4. REGISTRAR FUNCIONES
+    # ======================================
+
+    def registrar_acciones(self, arbol):
+
+        self.acciones.clear()
+
+        for accion in arbol.get("acciones", []):
+
+            nombre = accion["nombre"]
+
+            if nombre in self.acciones:
+                raise ValueError(
+                    f"La accion '{nombre}' ya existe"
+                )
+
+            self.acciones[nombre] = accion
+
+    # ======================================
+    # 5. EJECUTAR UNA ACCION
+    # ======================================
+
+    def ejecutar_accion(self, nombre):
+
+        if nombre not in self.acciones:
+            raise ValueError(
+                f"La accion '{nombre}' no existe"
+            )
+
+        # PROTECCION CONTRA RECURSION EXCESIVA
+        if len(self.pila_acciones) >= 100:
+            raise ValueError(
+                "Limite de llamadas a acciones superado"
+            )
+
+        accion = self.acciones[nombre]
+
+        self.pila_acciones.append(nombre)
+
+        try:
+            for instruccion in accion["instrucciones"]:
+                self.ejecutar_instruccion(instruccion)
+
+        finally:
+            self.pila_acciones.pop()
+
+    # ======================================
+    # 6. EJECUTAR INSTRUCCIONES
+    # ======================================
 
     def ejecutar_instruccion(self, instruccion):
 
         tipo = instruccion["tipo"]
 
-        # DECLARAR VARIABLES
+        # DECLARACION DE VARIABLES
 
         if tipo == "variable":
 
@@ -128,7 +187,7 @@ class EjecutorJARVIS:
 
             self.variables[nombre] = valor
 
-        # ACTUALIZAR VARIABLES
+        # ACTUALIZACION DE VARIABLES
 
         elif tipo == "asignacion":
 
@@ -166,10 +225,9 @@ class EjecutorJARVIS:
                     f"Operador desconocido: {operador}"
                 )
 
-            # GUARDAR NUEVO VALOR
             self.variables[nombre] = resultado
 
-        # IMPRIMIR
+        # IMPRIMIR RESULTADOS
 
         elif tipo == "imprimir":
 
@@ -179,7 +237,7 @@ class EjecutorJARVIS:
 
             print(self.convertir_salida(valor))
 
-        # CONDICIONES SI / SINO
+        # CONDICIONES SI Y SINO
 
         elif tipo == "si":
 
@@ -193,13 +251,11 @@ class EjecutorJARVIS:
                 )
 
             if condicion:
-
                 instrucciones = instruccion[
                     "instrucciones_si"
                 ]
 
             else:
-
                 instrucciones = instruccion[
                     "instrucciones_sino"
                 ]
@@ -220,13 +276,18 @@ class EjecutorJARVIS:
                     "REPETIR necesita un entero no negativo"
                 )
 
+            if cantidad > 10000:
+                raise ValueError(
+                    "REPETIR supero el limite permitido"
+                )
+
             for i in range(cantidad):
 
                 for elemento in instruccion["instrucciones"]:
                     self.ejecutar_instruccion(elemento)
 
-
         # CICLO MIENTRAS
+
         elif tipo == "mientras":
 
             iteraciones = 0
@@ -245,7 +306,6 @@ class EjecutorJARVIS:
                 if not condicion:
                     break
 
-                # Evitar ciclos infinitos
                 iteraciones += 1
 
                 if iteraciones > 10000:
@@ -256,17 +316,29 @@ class EjecutorJARVIS:
                 for elemento in instruccion["instrucciones"]:
                     self.ejecutar_instruccion(elemento)
 
+        # LLAMADAS A FUNCIONES ACCION
 
-        # OTRAS INSTRUCCIONES
+        elif tipo == "llamada":
+
+            nombre = instruccion["nombre"]
+
+            self.ejecutar_accion(nombre)
+
+        # INSTRUCCIONES DESCONOCIDAS
 
         else:
             raise ValueError(
                 f"Instruccion no implementada: {tipo}"
             )
 
-    # 5. EJECUTAR MISION PRINCIPAL
+    # ======================================
+    # 7. EJECUTAR MISION PRINCIPAL
+    # ======================================
 
     def ejecutar_programa(self, arbol):
+
+        # REGISTRAR ACCIONES DISPONIBLES
+        self.registrar_acciones(arbol)
 
         print("========== JARVIS ==========")
         print("Sistema:", arbol["nombre"])
@@ -283,7 +355,7 @@ class EjecutorJARVIS:
 
 
 # ==========================================
-# 6. INICIAR JARVIS
+# 8. INICIAR JARVIS
 # ==========================================
 
 if __name__ == "__main__":
@@ -300,15 +372,16 @@ if __name__ == "__main__":
 
         if arbol is None:
             raise SyntaxError(
-                "No se pudo analizar el programa"
+                "No se pudo construir el AST"
             )
 
         # ANALISIS SEMANTICO
         analizar_programa(arbol)
 
-        # EJECUTAR PROGRAMA
+        # CREAR EJECUTOR
         jarvis = EjecutorJARVIS()
 
+        # EJECUTAR MISION
         jarvis.ejecutar_programa(arbol)
 
         # COMPROBACION TEMPORAL
@@ -322,7 +395,8 @@ if __name__ == "__main__":
         ErrorSemantico,
         ValueError,
         TypeError,
-        ZeroDivisionError
+        ZeroDivisionError,
+        RecursionError
     ) as error:
 
         print("========== ERROR JARVIS ==========")

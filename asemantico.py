@@ -1,42 +1,62 @@
 
+
 # ==========================================
 # JARVIS - ANALIZADOR SEMANTICO
-# ETAPA 2: VARIABLES, ASIGNACIONES,
-# OPERACIONES, CONDICIONES Y CICLOS
+# ETAPA 3: VARIABLES, OPERACIONES,
+# ASIGNACIONES, CONDICIONES, CICLOS
+# Y FUNCIONES ACCION
 # ==========================================
 
 from lexer import lexer
 from parser import parser, codigo
 
 
+# ==========================================
+# 1. ERRORES SEMANTICOS
+# ==========================================
+
 class ErrorSemantico(Exception):
     pass
 
 
-# 1. TABLA DE SIMBOLOS
+# ==========================================
+# 2. TABLAS DE SIMBOLOS Y ACCIONES
+# ==========================================
 
 tabla_simbolos = {}
+tabla_acciones = {}
 
 
-# 2. OBTENER TIPO DE DATO
+# ==========================================
+# 3. IDENTIFICAR TIPOS DE DATOS
+# ==========================================
 
 def obtener_tipo(valor):
 
+    # EXPRESIONES Y COMPARACIONES
     if isinstance(valor, dict):
 
         tipo = valor.get("tipo")
 
         if tipo in ("operacion", "comparacion"):
 
-            izquierda = obtener_tipo(valor["izquierda"])
-            derecha = obtener_tipo(valor["derecha"])
-            operador = valor["operador"]
+            izquierda = obtener_tipo(
+                valor["izquierda"]
+            )
 
+            derecha = obtener_tipo(
+                valor["derecha"]
+            )
+
+            operador = valor["operador"]
             numericos = ("entero", "decimal")
 
+            # OPERACIONES MATEMATICAS
             if tipo == "operacion":
 
-                if izquierda not in numericos or derecha not in numericos:
+                if (izquierda not in numericos
+                        or derecha not in numericos):
+
                     raise ErrorSemantico(
                         f"Operacion '{operador}' invalida "
                         f"entre {izquierda} y {derecha}"
@@ -45,24 +65,29 @@ def obtener_tipo(valor):
                 if operador == "/":
                     return "decimal"
 
-                if "decimal" in (izquierda, derecha):
+                if ("decimal" in (izquierda, derecha)):
                     return "decimal"
 
                 return "entero"
 
+            # COMPARACIONES DE IGUALDAD
             if operador in ("==", "!="):
 
                 if izquierda == derecha:
                     return "logico"
 
-                if izquierda in numericos and derecha in numericos:
+                if (izquierda in numericos
+                        and derecha in numericos):
                     return "logico"
 
                 raise ErrorSemantico(
                     "Comparacion entre tipos incompatibles"
                 )
 
-            if izquierda not in numericos or derecha not in numericos:
+            # COMPARACIONES NUMERICAS
+            if (izquierda not in numericos
+                    or derecha not in numericos):
+
                 raise ErrorSemantico(
                     f"La comparacion '{operador}' "
                     "requiere valores numericos"
@@ -74,48 +99,64 @@ def obtener_tipo(valor):
             f"Expresion desconocida: {tipo}"
         )
 
+    # VALORES LOGICOS DE PYTHON
     if isinstance(valor, bool):
         return "logico"
 
+    # NUMEROS ENTEROS
     if isinstance(valor, int):
         return "entero"
 
+    # NUMEROS DECIMALES
     if isinstance(valor, float):
         return "decimal"
 
+    # CADENAS Y VALORES LOGICOS JARVIS
     if isinstance(valor, str):
 
         if valor in ("si paso", "no paso"):
             return "logico"
 
+        # CONSULTAR VARIABLE DECLARADA
         if valor in tabla_simbolos:
             return tabla_simbolos[valor]["tipo"]
 
         return "cadenita"
 
-    raise ErrorSemantico("Tipo de dato desconocido")
+    raise ErrorSemantico(
+        "Tipo de dato desconocido"
+    )
 
 
-# 3. COMPATIBILIDAD DE TIPOS
+# ==========================================
+# 4. COMPROBAR COMPATIBILIDAD DE TIPOS
+# ==========================================
 
 def tipos_compatibles(declarado, encontrado):
 
     if declarado == encontrado:
         return True
 
-    if declarado == "decimal" and encontrado == "entero":
+    # UN ENTERO PUEDE GUARDARSE COMO DECIMAL
+    if (declarado == "decimal"
+            and encontrado == "entero"):
         return True
 
     return False
 
 
-# 4. ANALIZAR INSTRUCCIONES
+# ==========================================
+# 5. ANALIZAR INSTRUCCIONES
+# ==========================================
 
 def analizar_instruccion(instruccion):
 
     tipo = instruccion["tipo"]
 
+    # --------------------------------------
     # DECLARACION DE VARIABLES
+    # --------------------------------------
+
     if tipo == "variable":
 
         nombre = instruccion["nombre"]
@@ -123,15 +164,21 @@ def analizar_instruccion(instruccion):
         valor = instruccion["valor"]
 
         if nombre in tabla_simbolos:
+
             raise ErrorSemantico(
                 f"La variable '{nombre}' ya existe"
             )
 
         encontrado = obtener_tipo(valor)
 
-        if not tipos_compatibles(declarado, encontrado):
+        if not tipos_compatibles(
+            declarado,
+            encontrado
+        ):
+
             raise ErrorSemantico(
-                f"La variable '{nombre}' es {declarado}, "
+                f"La variable '{nombre}' es "
+                f"de tipo {declarado}, "
                 f"pero recibe {encontrado}"
             )
 
@@ -140,7 +187,10 @@ def analizar_instruccion(instruccion):
             "valor": valor
         }
 
-    # ACTUALIZAR VARIABLES
+    # --------------------------------------
+    # ACTUALIZACION DE VARIABLES
+    # --------------------------------------
+
     elif tipo == "asignacion":
 
         nombre = instruccion["nombre"]
@@ -148,6 +198,7 @@ def analizar_instruccion(instruccion):
         valor = instruccion["valor"]
 
         if nombre not in tabla_simbolos:
+
             raise ErrorSemantico(
                 f"La variable '{nombre}' no existe"
             )
@@ -155,53 +206,82 @@ def analizar_instruccion(instruccion):
         declarado = tabla_simbolos[nombre]["tipo"]
         encontrado = obtener_tipo(valor)
 
+        # ASIGNACION NORMAL
         if operador == "=":
 
-            if not tipos_compatibles(declarado, encontrado):
+            if not tipos_compatibles(
+                declarado,
+                encontrado
+            ):
+
                 raise ErrorSemantico(
                     f"No se puede asignar {encontrado} "
                     f"a una variable {declarado}"
                 )
 
-        elif operador in ("+=", "-=", "*=", "/="):
+        # ASIGNACIONES MATEMATICAS
+        elif operador in (
+            "+=",
+            "-=",
+            "*=",
+            "/="
+        ):
 
             numericos = ("entero", "decimal")
 
-            if declarado not in numericos or encontrado not in numericos:
+            if (declarado not in numericos
+                    or encontrado not in numericos):
+
                 raise ErrorSemantico(
                     f"El operador '{operador}' "
                     "requiere valores numericos"
                 )
 
-            if operador == "/=" and declarado == "entero":
+            if (operador == "/="
+                    and declarado == "entero"):
+
                 raise ErrorSemantico(
-                    "Una division puede generar decimales. "
-                    "Utiliza una variable decimal"
+                    "Una division puede generar "
+                    "decimales. Utiliza una "
+                    "variable decimal"
                 )
 
-            if declarado == "entero" and encontrado == "decimal":
+            if (declarado == "entero"
+                    and encontrado == "decimal"):
+
                 raise ErrorSemantico(
-                    "No puedes guardar un resultado decimal "
+                    "No se puede guardar un decimal "
                     "en una variable entera"
                 )
 
         else:
+
             raise ErrorSemantico(
                 f"Operador no reconocido: {operador}"
             )
 
-    # IMPRIMIR
-    elif tipo == "imprimir":
-        obtener_tipo(instruccion["mensaje"])
+    # --------------------------------------
+    # INSTRUCCION IMPRIMIR
+    # --------------------------------------
 
+    elif tipo == "imprimir":
+
+        obtener_tipo(
+            instruccion["mensaje"]
+        )
+
+    # --------------------------------------
     # CONDICION SI / SINO
+    # --------------------------------------
+
     elif tipo == "si":
 
-        condicion = obtener_tipo(
+        tipo_condicion = obtener_tipo(
             instruccion["condicion"]
         )
 
-        if condicion != "logico":
+        if tipo_condicion != "logico":
+
             raise ErrorSemantico(
                 "La condicion SI debe ser logica"
             )
@@ -212,14 +292,18 @@ def analizar_instruccion(instruccion):
         for elemento in instruccion["instrucciones_sino"]:
             analizar_instruccion(elemento)
 
+    # --------------------------------------
     # CICLO REPETIR
+    # --------------------------------------
+
     elif tipo == "repetir":
 
-        cantidad = obtener_tipo(
+        tipo_cantidad = obtener_tipo(
             instruccion["cantidad"]
         )
 
-        if cantidad != "entero":
+        if tipo_cantidad != "entero":
+
             raise ErrorSemantico(
                 "REPETIR necesita una cantidad entera"
             )
@@ -227,8 +311,10 @@ def analizar_instruccion(instruccion):
         for elemento in instruccion["instrucciones"]:
             analizar_instruccion(elemento)
 
-
+    # --------------------------------------
     # CICLO MIENTRAS
+    # --------------------------------------
+
     elif tipo == "mientras":
 
         tipo_condicion = obtener_tipo(
@@ -236,6 +322,7 @@ def analizar_instruccion(instruccion):
         )
 
         if tipo_condicion != "logico":
+
             raise ErrorSemantico(
                 "La condicion MIENTRAS debe ser logica"
             )
@@ -243,35 +330,145 @@ def analizar_instruccion(instruccion):
         for elemento in instruccion["instrucciones"]:
             analizar_instruccion(elemento)
 
+    # --------------------------------------
+    # LLAMADAS A FUNCIONES
+    # --------------------------------------
+
+    elif tipo == "llamada":
+
+        nombre = instruccion["nombre"]
+
+        # COMPROBAR QUE LA ACCION EXISTA
+        if nombre not in tabla_acciones:
+
+            raise ErrorSemantico(
+                f"La accion '{nombre}' no existe"
+            )
+
+        # LA LLAMADA ES VALIDA
+        return
+
+    # --------------------------------------
+    # INSTRUCCIONES NO IMPLEMENTADAS
+    # --------------------------------------
 
     else:
+
         raise ErrorSemantico(
             f"Instruccion no implementada: {tipo}"
         )
 
 
+# ==========================================
+# 6. REGISTRAR FUNCIONES DE JARVIS
+# ==========================================
 
-# 5. ANALIZAR PROGRAMA COMPLETO
+def registrar_acciones(arbol):
+
+    tabla_acciones.clear()
+
+    for accion in arbol.get("acciones", []):
+
+        nombre = accion["nombre"]
+
+        # EVITAR FUNCIONES DUPLICADAS
+        if nombre in tabla_acciones:
+
+            raise ErrorSemantico(
+                f"La accion '{nombre}' "
+                "ya fue declarada"
+            )
+
+        tabla_acciones[nombre] = accion
+
+
+# ==========================================
+# 7. ANALIZAR PROGRAMA COMPLETO
+# ==========================================
 
 def analizar_programa(arbol):
 
+    # LIMPIAR TABLAS
     tabla_simbolos.clear()
+    tabla_acciones.clear()
 
+    # PRIMERO REGISTRAR LAS FUNCIONES
+    registrar_acciones(arbol)
+
+    # ANALIZAR MISION PRINCIPAL
     instrucciones = arbol["mision"]["instrucciones"]
 
     for instruccion in instrucciones:
         analizar_instruccion(instruccion)
 
+    # VALIDAR TAMBIEN LOS CUERPOS
+    # DE LAS FUNCIONES DECLARADAS
+    simbolos_mision = tabla_simbolos.copy()
+
+    for accion in tabla_acciones.values():
+
+        # CONTEXTO TEMPORAL PARA LA ACCION
+        tabla_simbolos.clear()
+        tabla_simbolos.update(simbolos_mision)
+
+        for instruccion in accion["instrucciones"]:
+            analizar_instruccion(instruccion)
+
+    # RESTAURAR SIMBOLOS DE LA MISION
+    tabla_simbolos.clear()
+    tabla_simbolos.update(simbolos_mision)
+
     return tabla_simbolos
 
 
-# 6. EJECUTAR ANALISIS SEMANTICO
+# ==========================================
+# 8. MOSTRAR RESULTADOS
+# ==========================================
+
+def mostrar_resultados(resultado):
+
+    print("========== JARVIS ==========")
+    print("Analisis semantico correcto")
+
+    # TABLA DE ACCIONES
+    print("\nTabla de acciones:")
+
+    if tabla_acciones:
+
+        for nombre in tabla_acciones:
+            print(
+                f"Accion registrada: {nombre}()"
+            )
+
+    else:
+        print("No hay acciones registradas")
+
+    # TABLA DE SIMBOLOS
+    print("\nTabla de simbolos:")
+
+    for nombre, datos in resultado.items():
+
+        print(
+            f"Variable: {nombre} | "
+            f"Tipo: {datos['tipo']}"
+        )
+
+    print("\nAsignaciones validadas correctamente")
+    print("Llamadas a funciones validadas")
+    print("Sin errores semanticos detectados")
+
+
+# ==========================================
+# 9. INICIAR ANALISIS SEMANTICO
+# ==========================================
 
 if __name__ == "__main__":
 
     try:
+
         lexer.lineno = 1
 
+        # ANALISIS SINTACTICO
         arbol = parser.parse(
             codigo,
             lexer=lexer
@@ -282,23 +479,16 @@ if __name__ == "__main__":
                 "No se pudo construir el AST"
             )
 
+        # ANALISIS SEMANTICO
         resultado = analizar_programa(arbol)
 
-        print("========== JARVIS ==========")
-        print("Analisis semantico correcto")
+        # MOSTRAR RESULTADOS
+        mostrar_resultados(resultado)
 
-        print("\nTabla de simbolos:")
-
-        for nombre, datos in resultado.items():
-            print(
-                f"Variable: {nombre} | "
-                f"Tipo: {datos['tipo']}"
-            )
-
-        print("\nAsignaciones validadas correctamente")
-        print("Sin errores semanticos detectados")
-
-    except (SyntaxError, ErrorSemantico) as error:
+    except (
+        SyntaxError,
+        ErrorSemantico
+    ) as error:
 
         print("========== ERROR JARVIS ==========")
         print(error)

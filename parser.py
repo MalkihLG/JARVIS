@@ -16,6 +16,7 @@ tokens = (
     "SISTEMA",
     "MISION",
     "PRINCIPAL",
+    "ACCION",
     "IDENTIFICADOR",
 
     # Variables y tipos
@@ -92,16 +93,50 @@ precedence = (
 # 3. ESTRUCTURA DEL SISTEMA
 # ==========================================
 
+# 3. ESTRUCTURA DEL SISTEMA
+
 def p_programa(p):
     """
-    programa : SISTEMA IDENTIFICADOR LLAVEIZQ mision LLAVEDER
+    programa : SISTEMA IDENTIFICADOR LLAVEIZQ acciones mision LLAVEDER
     """
 
     p[0] = {
         "tipo": "sistema",
         "nombre": p[2],
-        "mision": p[4]
+        "acciones": p[4],
+        "mision": p[5]
     }
+
+
+# 3.1 LISTA DE FUNCIONES
+
+def p_acciones_varias(p):
+    """
+    acciones : acciones accion
+    """
+    p[0] = p[1] + [p[2]]
+
+
+def p_acciones_vacias(p):
+    """
+    acciones :
+    """
+    p[0] = []
+
+
+# 3.2 CREAR UNA FUNCION
+
+def p_accion(p):
+    """
+    accion : ACCION IDENTIFICADOR PARIZQ PARDER LLAVEIZQ instrucciones LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "accion",
+        "nombre": p[2],
+        "instrucciones": p[6]
+    }
+
 
 
 # ==========================================
@@ -266,6 +301,7 @@ def p_valor_parentesis(p):
     p[0] = p[2]
 
 
+
 # ==========================================
 # 13. INSTRUCCION IMPRIMIR
 # ==========================================
@@ -279,6 +315,22 @@ def p_instruccion_imprimir(p):
         "tipo": "imprimir",
         "mensaje": p[3]
     }
+
+
+# ==========================================
+# 13.1 LLAMADA A UNA FUNCION
+# ==========================================
+
+def p_instruccion_llamada(p):
+    """
+    instruccion : IDENTIFICADOR PARIZQ PARDER PUNTOYCOMA
+    """
+
+    p[0] = {
+        "tipo": "llamada",
+        "nombre": p[1]
+    }
+
 
 
 # ==========================================
@@ -437,6 +489,14 @@ def mostrar_instruccion(instruccion, nivel=0):
             f"{mostrar_valor(instruccion['mensaje'])}"
         )
 
+    # LLAMADA A UNA FUNCION
+    elif tipo == "llamada":
+
+        print(
+            f"{espacio}Llamar accion: "
+            f"{instruccion['nombre']}()"
+        )
+
     # CONDICIONES
     elif tipo == "si":
 
@@ -489,6 +549,10 @@ def mostrar_instruccion(instruccion, nivel=0):
 codigo = '''
 sistema StarkLab {
 
+    accion activarArmadura() {
+        imprimir("Armadura activada");
+    }
+
     mision principal {
 
         var heroe: cadenita = "Iron Man";
@@ -504,6 +568,7 @@ sistema StarkLab {
         var promedio: decimal = (8 + 9 + 10) / 3;
 
         imprimir("Bienvenido a JARVIS");
+        activarArmadura();
         imprimir(resultado);
 
         si (energia >= 50) {
@@ -560,6 +625,16 @@ if __name__ == "__main__":
 
         print("Sistema:", resultado["nombre"])
         print("Mision:", resultado["mision"]["nombre"])
+
+        # MOSTRAR FUNCIONES DECLARADAS
+        print("\nAcciones encontradas:")
+
+        for accion in resultado["acciones"]:
+            print(f"Accion: {accion['nombre']}()")
+
+            for instruccion in accion["instrucciones"]:
+                mostrar_instruccion(instruccion, 1)
+
 
         print("\nInstrucciones encontradas:")
 
