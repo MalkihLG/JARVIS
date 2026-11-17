@@ -640,6 +640,7 @@ sistema StarkLab {
         presentarHeroe("Iron Man", 100);
 
 
+
         imprimir(resultado);
 
         si (energia >= 50) {

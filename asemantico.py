@@ -360,18 +360,26 @@ def analizar_instruccion(instruccion):
                 f"pero recibio {len(argumentos)}"
             )
 
-        # VALIDAR EL TIPO DE LOS ARGUMENTOS
+        # VALIDAR TIPOS DE LOS ARGUMENTOS
         for parametro, argumento in zip(parametros, argumentos):
 
             tipo_esperado = parametro["tipo"]
+            nombre_parametro = parametro["nombre"]
 
+            # VALIDAR ENTEROS LITERALES
             if tipo_esperado == "entero" and type(argumento) is not int:
                 raise ErrorSemantico(
                     f"La accion '{nombre}' espera un entero "
-                    f"en el parametro '{parametro['nombre']}'"
+                    f"en el parametro '{nombre_parametro}'"
                 )
 
-        return
+            # VALIDAR CADENAS LITERALES
+            if tipo_esperado == "cadenita" and not isinstance(argumento, str):
+                raise ErrorSemantico(
+                    f"La accion '{nombre}' espera una cadenita "
+                    f"en el parametro '{nombre_parametro}'"
+                )
+
 
     # --------------------------------------
     # INSTRUCCIONES NO IMPLEMENTADAS
