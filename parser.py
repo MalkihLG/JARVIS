@@ -4,85 +4,60 @@ from lexer import lexer
 
 # ==========================================
 # JARVIS - ANALIZADOR SINTACTICO
-# ETAPA 6: VARIABLES, OPERACIONES,
-# DECISIONES, CICLOS Y ASIGNACIONES
+# VARIABLES, OPERACIONES, CONDICIONES,
+# CICLOS Y FUNCIONES CON PARAMETROS
 # ==========================================
 
-
 # 1. TOKENS UTILIZADOS EN LA GRAMATICA
-
 tokens = (
-    # Estructura del programa
-    "SISTEMA",
-    "MISION",
-    "PRINCIPAL",
-    "ACCION",
-    "IDENTIFICADOR",
+    # Estructura principal
+    "SISTEMA", "MISION", "PRINCIPAL",
+    "ACCION", "IDENTIFICADOR",
 
     # Variables y tipos
-    "VAR",
-    "ENTERO",
-    "DECIMAL",
-    "CADENITA",
-    "LOGICO",
-    "NUMERO",
-    "CADENA",
-    "SI_PASO",
-    "NO_PASO",
+    "VAR", "ENTERO", "DECIMAL",
+    "CADENITA", "LOGICO",
+    "NUMERO", "CADENA",
+    "SI_PASO", "NO_PASO",
 
     # Entrada y salida
     "IMPRIMIR",
 
-    # Operadores matematicos
-    "SUMA",
-    "RESTA",
-    "MULTIPLICACION",
-    "DIVISION",
+    # Operaciones matematicas
+    "SUMA", "RESTA",
+    "MULTIPLICACION", "DIVISION",
 
     # Comparaciones
-    "IGUAL",
-    "DIFERENTE",
-    "MAYOR",
-    "MENOR",
-    "MAYORIGUAL",
-    "MENORIGUAL",
+    "IGUAL", "DIFERENTE",
+    "MAYOR", "MENOR",
+    "MAYORIGUAL", "MENORIGUAL",
 
     # Asignaciones
-    "ASIGNAR",
-    "MASIGUAL",
-    "MENOSIGUAL",
-    "PORIGUAL",
+    "ASIGNAR", "MASIGUAL",
+    "MENOSIGUAL", "PORIGUAL",
     "DIVIGUAL",
 
-    # Decisiones
-    "SI",
-    "SINO",
-
-    # Ciclos
-    "REPETIR",
-    "MIENTRAS",
+    # Condiciones y ciclos
+    "SI", "SINO",
+    "REPETIR", "MIENTRAS",
 
     # Simbolos
-    "PARIZQ",
-    "PARDER",
-    "LLAVEIZQ",
-    "LLAVEDER",
-    "PUNTOYCOMA",
-    "DOSPUNTOS",
+    "PARIZQ", "PARDER",
+    "LLAVEIZQ", "LLAVEDER",
+    "PUNTOYCOMA", "DOSPUNTOS",
+    "COMA",
 )
 
-
+# ==========================================
 # 2. PRIORIDAD DE OPERADORES
+# ==========================================
 
 precedence = (
     (
         "nonassoc",
-        "IGUAL",
-        "DIFERENTE",
-        "MAYOR",
-        "MENOR",
-        "MAYORIGUAL",
-        "MENORIGUAL"
+        "IGUAL", "DIFERENTE",
+        "MAYOR", "MENOR",
+        "MAYORIGUAL", "MENORIGUAL"
     ),
     ("left", "SUMA", "RESTA"),
     ("left", "MULTIPLICACION", "DIVISION"),
@@ -92,8 +67,6 @@ precedence = (
 # ==========================================
 # 3. ESTRUCTURA DEL SISTEMA
 # ==========================================
-
-# 3. ESTRUCTURA DEL SISTEMA
 
 def p_programa(p):
     """
@@ -108,12 +81,11 @@ def p_programa(p):
     }
 
 
-# 3.1 LISTA DE FUNCIONES
-
 def p_acciones_varias(p):
     """
     acciones : acciones accion
     """
+
     p[0] = p[1] + [p[2]]
 
 
@@ -121,19 +93,18 @@ def p_acciones_vacias(p):
     """
     acciones :
     """
+
     p[0] = []
 
 
-# 3.2 CREAR UNA FUNCION
-
 # ==========================================
-# FUNCIONES ACCION CON PARAMETROS
+# 4. FUNCIONES ACCION CON VARIOS PARAMETROS
 # ==========================================
 
 def p_accion(p):
     """
     accion : ACCION IDENTIFICADOR PARIZQ PARDER LLAVEIZQ instrucciones LLAVEDER
-           | ACCION IDENTIFICADOR PARIZQ IDENTIFICADOR DOSPUNTOS tipo PARDER LLAVEIZQ instrucciones LLAVEDER
+           | ACCION IDENTIFICADOR PARIZQ lista_parametros PARDER LLAVEIZQ instrucciones LLAVEDER
     """
 
     # FUNCION SIN PARAMETROS
@@ -142,17 +113,11 @@ def p_accion(p):
         parametros = []
         instrucciones = p[6]
 
-    # FUNCION CON UN PARAMETRO
+    # FUNCION CON PARAMETROS
     else:
 
-        parametros = [
-            {
-                "nombre": p[4],
-                "tipo": p[6]
-            }
-        ]
-
-        instrucciones = p[9]
+        parametros = p[4]
+        instrucciones = p[7]
 
     p[0] = {
         "tipo": "accion",
@@ -162,10 +127,36 @@ def p_accion(p):
     }
 
 
+# UN SOLO PARAMETRO
+def p_lista_parametros_uno(p):
+    """
+    lista_parametros : IDENTIFICADOR DOSPUNTOS tipo
+    """
+
+    p[0] = [
+        {
+            "nombre": p[1],
+            "tipo": p[3]
+        }
+    ]
+
+
+# DOS O MAS PARAMETROS
+def p_lista_parametros_varios(p):
+    """
+    lista_parametros : lista_parametros COMA IDENTIFICADOR DOSPUNTOS tipo
+    """
+
+    p[0] = p[1] + [
+        {
+            "nombre": p[3],
+            "tipo": p[5]
+        }
+    ]
 
 
 # ==========================================
-# 4. MISION PRINCIPAL
+# 5. MISION PRINCIPAL
 # ==========================================
 
 def p_mision(p):
@@ -181,7 +172,7 @@ def p_mision(p):
 
 
 # ==========================================
-# 5. LISTA DE INSTRUCCIONES
+# 6. LISTA DE INSTRUCCIONES
 # ==========================================
 
 def p_instrucciones_varias(p):
@@ -201,7 +192,7 @@ def p_instrucciones_una(p):
 
 
 # ==========================================
-# 6. DECLARACION DE VARIABLES
+# 7. DECLARACION DE VARIABLES
 # ==========================================
 
 def p_instruccion_variable(p):
@@ -218,7 +209,7 @@ def p_instruccion_variable(p):
 
 
 # ==========================================
-# 7. ACTUALIZACION DE VARIABLES
+# 8. ACTUALIZACION DE VARIABLES
 # ==========================================
 
 def p_instruccion_actualizar(p):
@@ -239,7 +230,7 @@ def p_instruccion_actualizar(p):
 
 
 # ==========================================
-# 8. TIPOS DE DATOS
+# 9. TIPOS DE DATOS
 # ==========================================
 
 def p_tipo(p):
@@ -254,7 +245,7 @@ def p_tipo(p):
 
 
 # ==========================================
-# 9. VALORES
+# 10. VALORES
 # ==========================================
 
 def p_valor(p):
@@ -273,7 +264,7 @@ def p_valor(p):
 
 
 # ==========================================
-# 10. OPERACIONES MATEMATICAS
+# 11. OPERACIONES MATEMATICAS
 # ==========================================
 
 def p_valor_operacion(p):
@@ -293,7 +284,7 @@ def p_valor_operacion(p):
 
 
 # ==========================================
-# 11. COMPARACIONES
+# 12. COMPARACIONES
 # ==========================================
 
 def p_valor_comparacion(p):
@@ -315,7 +306,7 @@ def p_valor_comparacion(p):
 
 
 # ==========================================
-# 12. EXPRESIONES CON PARENTESIS
+# 13. EXPRESIONES CON PARENTESIS
 # ==========================================
 
 def p_valor_parentesis(p):
@@ -326,9 +317,8 @@ def p_valor_parentesis(p):
     p[0] = p[2]
 
 
-
 # ==========================================
-# 13. INSTRUCCION IMPRIMIR
+# 14. INSTRUCCION IMPRIMIR
 # ==========================================
 
 def p_instruccion_imprimir(p):
@@ -341,25 +331,23 @@ def p_instruccion_imprimir(p):
         "mensaje": p[3]
     }
 
-
-
 # ==========================================
-# LLAMADAS A FUNCIONES CON PARAMETROS
+# 15. LLAMADAS A FUNCIONES CON ARGUMENTOS
 # ==========================================
 
 def p_instruccion_llamada(p):
     """
     instruccion : IDENTIFICADOR PARIZQ PARDER PUNTOYCOMA
-                | IDENTIFICADOR PARIZQ valor PARDER PUNTOYCOMA
+                | IDENTIFICADOR PARIZQ lista_argumentos PARDER PUNTOYCOMA
     """
 
-    # LLAMADA SIN PARAMETROS
+    # LLAMADA SIN ARGUMENTOS
     if len(p) == 5:
         argumentos = []
 
-    # LLAMADA CON UN PARAMETRO
+    # LLAMADA CON UNO O VARIOS ARGUMENTOS
     else:
-        argumentos = [p[3]]
+        argumentos = p[3]
 
     p[0] = {
         "tipo": "llamada",
@@ -368,9 +356,27 @@ def p_instruccion_llamada(p):
     }
 
 
+# UN SOLO ARGUMENTO
+def p_lista_argumentos_uno(p):
+    """
+    lista_argumentos : valor
+    """
+
+    p[0] = [p[1]]
+
+
+# DOS O MAS ARGUMENTOS
+def p_lista_argumentos_varios(p):
+    """
+    lista_argumentos : lista_argumentos COMA valor
+    """
+
+    p[0] = p[1] + [p[3]]
+
+
 
 # ==========================================
-# 14. CONDICIONES SI Y SINO
+# 16. CONDICIONES SI Y SINO
 # ==========================================
 
 def p_instruccion_si(p):
@@ -403,7 +409,7 @@ def p_opcion_sino_vacio(p):
 
 
 # ==========================================
-# 15. CICLO REPETIR
+# 17. CICLO REPETIR
 # ==========================================
 
 def p_instruccion_repetir(p):
@@ -417,7 +423,10 @@ def p_instruccion_repetir(p):
         "instrucciones": p[6]
     }
 
-    # CICLO MIENTRAS
+
+# ==========================================
+# 18. CICLO MIENTRAS
+# ==========================================
 
 def p_instruccion_mientras(p):
     """
@@ -432,7 +441,7 @@ def p_instruccion_mientras(p):
 
 
 # ==========================================
-# 16. ERRORES SINTACTICOS
+# 19. ERRORES SINTACTICOS
 # ==========================================
 
 def p_error(p):
@@ -449,7 +458,7 @@ def p_error(p):
 
 
 # ==========================================
-# 17. CREAR ANALIZADOR SINTACTICO
+# 20. CREAR ANALIZADOR SINTACTICO
 # ==========================================
 
 parser = yacc.yacc(
@@ -460,7 +469,7 @@ parser = yacc.yacc(
 
 
 # ==========================================
-# 18. MOSTRAR EXPRESIONES
+# 21. MOSTRAR EXPRESIONES
 # ==========================================
 
 def mostrar_valor(valor):
@@ -490,7 +499,7 @@ def mostrar_valor(valor):
 
 
 # ==========================================
-# 19. MOSTRAR INSTRUCCIONES
+# 22. MOSTRAR INSTRUCCIONES
 # ==========================================
 
 def mostrar_instruccion(instruccion, nivel=0):
@@ -525,23 +534,24 @@ def mostrar_instruccion(instruccion, nivel=0):
             f"{mostrar_valor(instruccion['mensaje'])}"
         )
 
-
-    # LLAMADA A UNA FUNCION
+    # LLAMADAS A FUNCIONES
     elif tipo == "llamada":
 
         nombre = instruccion["nombre"]
 
-        argumentos = instruccion.get("argumentos", [])
+        argumentos = instruccion.get(
+            "argumentos", []
+        )
 
         argumentos_texto = ", ".join(
-            mostrar_valor(arg) for arg in argumentos
+            mostrar_valor(arg)
+            for arg in argumentos
         )
 
         print(
             f"{espacio}Llamar accion: "
             f"{nombre}({argumentos_texto})"
         )
-
 
     # CONDICIONES
     elif tipo == "si":
@@ -574,7 +584,6 @@ def mostrar_instruccion(instruccion, nivel=0):
         for item in instruccion["instrucciones"]:
             mostrar_instruccion(item, nivel + 1)
 
-
     # CICLO MIENTRAS
     elif tipo == "mientras":
 
@@ -587,9 +596,8 @@ def mostrar_instruccion(instruccion, nivel=0):
             mostrar_instruccion(item, nivel + 1)
 
 
-
 # ==========================================
-# 20. CODIGO DE PRUEBA DE JARVIS
+# 23. CODIGO DE PRUEBA DE JARVIS
 # ==========================================
 
 codigo = '''
@@ -598,12 +606,19 @@ sistema StarkLab {
     accion activarArmadura() {
         imprimir("Armadura activada");
     }
-    
+
     accion usarPropulsor(consumo: entero) {
         imprimir("Propulsor activado");
         imprimir(consumo);
     }
-    
+
+    accion presentarHeroe(nombre: cadenita, energia: entero) {
+        imprimir("Datos del superheroe");
+        imprimir(nombre);
+        imprimir(energia);
+    }
+
+   
     mision principal {
 
         var heroe: cadenita = "Iron Man";
@@ -619,8 +634,12 @@ sistema StarkLab {
         var promedio: decimal = (8 + 9 + 10) / 3;
 
         imprimir("Bienvenido a JARVIS");
+
         activarArmadura();
         usarPropulsor(25);
+        presentarHeroe("Iron Man", 100);
+
+
         imprimir(resultado);
 
         si (energia >= 50) {
@@ -638,22 +657,20 @@ sistema StarkLab {
         }
 
         imprimir("Escaneo terminado");
-        
-        
-var contador: entero = 3;
 
-mientras (contador > 0) {
-    imprimir(contador);
-    contador -= 1;
-}
+        var contador: entero = 3;
 
+        mientras (contador > 0) {
+            imprimir(contador);
+            contador -= 1;
+        }
     }
 }
 '''
 
 
 # ==========================================
-# 21. EJECUTAR ANALISIS SINTACTICO
+# 24. EJECUTAR ANALISIS SINTACTICO
 # ==========================================
 
 if __name__ == "__main__":
@@ -674,7 +691,6 @@ if __name__ == "__main__":
 
         print("========== JARVIS ==========")
         print("Analisis sintactico correcto")
-
         print("Sistema:", resultado["nombre"])
         print("Mision:", resultado["mision"]["nombre"])
 
@@ -682,11 +698,23 @@ if __name__ == "__main__":
         print("\nAcciones encontradas:")
 
         for accion in resultado["acciones"]:
-            print(f"Accion: {accion['nombre']}()")
+
+            parametros = accion.get(
+                "parametros", []
+            )
+
+            texto_parametros = ", ".join(
+                f"{p['nombre']}: {p['tipo']}"
+                for p in parametros
+            )
+
+            print(
+                f"Accion: {accion['nombre']}"
+                f"({texto_parametros})"
+            )
 
             for instruccion in accion["instrucciones"]:
                 mostrar_instruccion(instruccion, 1)
-
 
         print("\nInstrucciones encontradas:")
 
