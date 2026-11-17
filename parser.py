@@ -126,16 +126,41 @@ def p_acciones_vacias(p):
 
 # 3.2 CREAR UNA FUNCION
 
+# ==========================================
+# FUNCIONES ACCION CON PARAMETROS
+# ==========================================
+
 def p_accion(p):
     """
     accion : ACCION IDENTIFICADOR PARIZQ PARDER LLAVEIZQ instrucciones LLAVEDER
+           | ACCION IDENTIFICADOR PARIZQ IDENTIFICADOR DOSPUNTOS tipo PARDER LLAVEIZQ instrucciones LLAVEDER
     """
+
+    # FUNCION SIN PARAMETROS
+    if len(p) == 8:
+
+        parametros = []
+        instrucciones = p[6]
+
+    # FUNCION CON UN PARAMETRO
+    else:
+
+        parametros = [
+            {
+                "nombre": p[4],
+                "tipo": p[6]
+            }
+        ]
+
+        instrucciones = p[9]
 
     p[0] = {
         "tipo": "accion",
         "nombre": p[2],
-        "instrucciones": p[6]
+        "parametros": parametros,
+        "instrucciones": instrucciones
     }
+
 
 
 
@@ -317,18 +342,29 @@ def p_instruccion_imprimir(p):
     }
 
 
+
 # ==========================================
-# 13.1 LLAMADA A UNA FUNCION
+# LLAMADAS A FUNCIONES CON PARAMETROS
 # ==========================================
 
 def p_instruccion_llamada(p):
     """
     instruccion : IDENTIFICADOR PARIZQ PARDER PUNTOYCOMA
+                | IDENTIFICADOR PARIZQ valor PARDER PUNTOYCOMA
     """
+
+    # LLAMADA SIN PARAMETROS
+    if len(p) == 5:
+        argumentos = []
+
+    # LLAMADA CON UN PARAMETRO
+    else:
+        argumentos = [p[3]]
 
     p[0] = {
         "tipo": "llamada",
-        "nombre": p[1]
+        "nombre": p[1],
+        "argumentos": argumentos
     }
 
 
@@ -489,13 +525,23 @@ def mostrar_instruccion(instruccion, nivel=0):
             f"{mostrar_valor(instruccion['mensaje'])}"
         )
 
+
     # LLAMADA A UNA FUNCION
     elif tipo == "llamada":
 
+        nombre = instruccion["nombre"]
+
+        argumentos = instruccion.get("argumentos", [])
+
+        argumentos_texto = ", ".join(
+            mostrar_valor(arg) for arg in argumentos
+        )
+
         print(
             f"{espacio}Llamar accion: "
-            f"{instruccion['nombre']}()"
+            f"{nombre}({argumentos_texto})"
         )
+
 
     # CONDICIONES
     elif tipo == "si":
@@ -552,7 +598,12 @@ sistema StarkLab {
     accion activarArmadura() {
         imprimir("Armadura activada");
     }
-
+    
+    accion usarPropulsor(consumo: entero) {
+        imprimir("Propulsor activado");
+        imprimir(consumo);
+    }
+    
     mision principal {
 
         var heroe: cadenita = "Iron Man";
@@ -569,6 +620,7 @@ sistema StarkLab {
 
         imprimir("Bienvenido a JARVIS");
         activarArmadura();
+        usarPropulsor(25);
         imprimir(resultado);
 
         si (energia >= 50) {

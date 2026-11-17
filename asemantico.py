@@ -340,12 +340,37 @@ def analizar_instruccion(instruccion):
 
         # COMPROBAR QUE LA ACCION EXISTA
         if nombre not in tabla_acciones:
-
             raise ErrorSemantico(
                 f"La accion '{nombre}' no existe"
             )
 
-        # LA LLAMADA ES VALIDA
+        # OBTENER LOS PARAMETROS DECLARADOS
+        accion = tabla_acciones[nombre]
+
+        parametros = accion.get("parametros", [])
+
+        # OBTENER LOS ARGUMENTOS ENVIADOS
+        argumentos = instruccion.get("argumentos", [])
+
+        # VALIDAR CANTIDAD DE ARGUMENTOS
+        if len(argumentos) != len(parametros):
+            raise ErrorSemantico(
+                f"La accion '{nombre}' espera "
+                f"{len(parametros)} argumento(s), "
+                f"pero recibio {len(argumentos)}"
+            )
+
+        # VALIDAR EL TIPO DE LOS ARGUMENTOS
+        for parametro, argumento in zip(parametros, argumentos):
+
+            tipo_esperado = parametro["tipo"]
+
+            if tipo_esperado == "entero" and type(argumento) is not int:
+                raise ErrorSemantico(
+                    f"La accion '{nombre}' espera un entero "
+                    f"en el parametro '{parametro['nombre']}'"
+                )
+
         return
 
     # --------------------------------------

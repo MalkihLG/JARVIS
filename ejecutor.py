@@ -139,24 +139,53 @@ class EjecutorJARVIS:
 
             self.acciones[nombre] = accion
 
+
     # ======================================
-    # 5. EJECUTAR UNA ACCION
+    # EJECUTAR UNA ACCION CON PARAMETROS
     # ======================================
 
-    def ejecutar_accion(self, nombre):
+    def ejecutar_accion(self, nombre, argumentos=None):
 
         if nombre not in self.acciones:
             raise ValueError(
                 f"La accion '{nombre}' no existe"
             )
 
-        # PROTECCION CONTRA RECURSION EXCESIVA
+        accion = self.acciones[nombre]
+
+        parametros = accion.get("parametros", [])
+        argumentos = argumentos if argumentos is not None else []
+
+        if len(parametros) != len(argumentos):
+            raise ValueError(
+                f"La accion '{nombre}' espera "
+                f"{len(parametros)} argumento(s)"
+            )
+
+        # EVALUAR LOS ARGUMENTOS
+        valores = [
+            self.evaluar(argumento)
+            for argumento in argumentos
+        ]
+
         if len(self.pila_acciones) >= 100:
             raise ValueError(
                 "Limite de llamadas a acciones superado"
             )
 
-        accion = self.acciones[nombre]
+        # GUARDAR VALORES ANTERIORES
+        anteriores = {}
+
+        for parametro, valor in zip(parametros, valores):
+
+            nombre_parametro = parametro["nombre"]
+
+            anteriores[nombre_parametro] = (
+                nombre_parametro in self.variables,
+                self.variables.get(nombre_parametro)
+            )
+
+            self.variables[nombre_parametro] = valor
 
         self.pila_acciones.append(nombre)
 
@@ -165,7 +194,16 @@ class EjecutorJARVIS:
                 self.ejecutar_instruccion(instruccion)
 
         finally:
+            # RESTAURAR LAS VARIABLES ANTERIORES
+            for variable, (existia, valor) in anteriores.items():
+
+                if existia:
+                    self.variables[variable] = valor
+                else:
+                    self.variables.pop(variable, None)
+
             self.pila_acciones.pop()
+
 
     # ======================================
     # 6. EJECUTAR INSTRUCCIONES
@@ -322,7 +360,9 @@ class EjecutorJARVIS:
 
             nombre = instruccion["nombre"]
 
-            self.ejecutar_accion(nombre)
+            argumentos = instruccion.get("argumentos", [])
+
+            self.ejecutar_accion(nombre, argumentos)
 
         # INSTRUCCIONES DESCONOCIDAS
 
