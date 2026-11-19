@@ -614,7 +614,9 @@ sistema StarkLab {
 
     accion presentarHeroe(nombre: cadenita, energia: entero) {
         imprimir("Datos del superheroe");
+        imprimir("Nombre:");
         imprimir(nombre);
+        imprimir("Energia:");
         imprimir(energia);
     }
 
@@ -640,7 +642,7 @@ sistema StarkLab {
         presentarHeroe("Iron Man", 100);
 
 
-
+        imprimir("resultado:");
         imprimir(resultado);
 
         si (energia >= 50) {
