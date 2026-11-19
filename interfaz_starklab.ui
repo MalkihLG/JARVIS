@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>StarkLabWindow</class>
+ <widget class="QMainWindow" name="StarkLabWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1674</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>STARKLAB // ARC Reactor &amp; JARVIS Monitor</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow {
+    background-color: #090d16;
+    color: #e6f7ff;
+    font-family: &quot;Segoe UI&quot;, Arial, sans-serif;
+}
+
+QLabel {
+    color: #7ee8fa;
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+QLabel#lblTitulo {
+    color: #ffffff;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #7f1d1d, stop:0.55 #111827, stop:1 #083344);
+    border: 1px solid #38bdf8;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 15px;
+}
+
+QPushButton#btnEjecutar {
+    background-color: #0284c7;
+    color: #ffffff;
+    border: 1px solid #7dd3fc;
+    border-radius: 6px;
+    padding: 9px 18px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+QPushButton#btnEjecutar:hover {
+    background-color: #0ea5e9;
+    border: 1px solid #bae6fd;
+}
+
+QPushButton#btnEjecutar:pressed {
+    background-color: #0369a1;
+}
+
+QPushButton#btnLimpiar {
+    background-color: #450a0a;
+    color: #fca5a5;
+    border: 1px solid #ef4444;
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+QPushButton#btnLimpiar:hover {
+    background-color: #7f1d1d;
+    color: #ffffff;
+}
+
+QPlainTextEdit {
+    background-color: #0f172a;
+    color: #e0f2fe;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 8px;
+    font-family: &quot;Consolas&quot;, &quot;Courier New&quot;, monospace;
+    font-size: 13px;
+    selection-background-color: #0284c7;
+}
+
+QPlainTextEdit:focus {
+    border: 1px solid #38bdf8;
+}
+
+QTableWidget {
+    background-color: #0f172a;
+    color: #e2e8f0;
+    gridline-color: #1e3a5f;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+QHeaderView::section {
+    background-color: #1e293b;
+    color: #fbbf24;
+    border: none;
+    border-right: 1px solid #334155;
+    border-bottom: 1px solid #38bdf8;
+    padding: 6px;
+    font-weight: bold;
+}
+
+QLabel#imgArbol {
+    background-color: #0b1322;
+    color: #94a3b8;
+    border: 1px dashed #38bdf8;
+    border-radius: 8px;
+    padding: 10px;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_main">
+    <item>
+     <layout class="QHBoxLayout" name="headerLayout">
+      <item>
+       <widget class="QLabel" name="lblTitulo">
+        <property name="text">
+         <string> STARKLAB — Misión: principal | ARC &amp; JARVIS</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnEjecutar">
+        <property name="text">
+         <string>Ejecutar Misión</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnLimpiar">
+        <property name="text">
+         <string>Limpiar</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="contentLayout">
+      <item>
+       <layout class="QVBoxLayout" name="leftLayout">
+        <item>
+         <widget class="QLabel" name="lblCodigo">
+          <property name="text">
+           <string>CÓDIGO FUENTE JARVIS</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtCodigo"/>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblConsola">
+          <property name="text">
+           <string>CONSOLA / SALIDA</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="txtConsola">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="rightLayout">
+        <item>
+         <widget class="QLabel" name="lblVariables">
+          <property name="text">
+           <string>TELEMETRÍA DE VARIABLES Y CONDICIONES</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="tblVariables">
+          <column>
+           <property name="text">
+            <string>       Variable / Estado</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Tipo</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Valor</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblArbol">
+          <property name="text">
+           <string>ÁRBOL DE SINTAXIS ABSTRACTA (AST)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="imgArbol">
+          <property name="text">
+           <string>Sin imagen AST cargada</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
