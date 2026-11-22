@@ -243,7 +243,6 @@ def p_tipo(p):
 
     p[0] = p[1]
 
-
 # ==========================================
 # 10. VALORES
 # ==========================================
@@ -257,10 +256,26 @@ def p_valor(p):
           | IDENTIFICADOR
     """
 
-    if p.slice[1].type == "CADENA":
+    tipo_token = p.slice[1].type
+
+    # CADENAS DE TEXTO
+    if tipo_token == "CADENA":
+
         p[0] = p[1][1:-1]
+
+    # IDENTIFICADORES DE VARIABLES
+    elif tipo_token == "IDENTIFICADOR":
+
+        p[0] = {
+            "tipo": "identificador",
+            "nombre": p[1]
+        }
+
+    # NUMEROS Y VALORES LOGICOS
     else:
+
         p[0] = p[1]
+
 
 
 # ==========================================
@@ -467,7 +482,6 @@ parser = yacc.yacc(
     write_tables=False
 )
 
-
 # ==========================================
 # 21. MOSTRAR EXPRESIONES
 # ==========================================
@@ -476,10 +490,14 @@ def mostrar_valor(valor):
 
     if isinstance(valor, dict):
 
-        if valor.get("tipo") in (
-            "operacion",
-            "comparacion"
-        ):
+        tipo = valor.get("tipo")
+
+        # MOSTRAR IDENTIFICADORES
+        if tipo == "identificador":
+            return valor["nombre"]
+
+        # MOSTRAR OPERACIONES Y COMPARACIONES
+        if tipo in ("operacion", "comparacion"):
 
             izquierda = mostrar_valor(
                 valor["izquierda"]
@@ -639,7 +657,7 @@ sistema StarkLab {
 
         activarArmadura();
         usarPropulsor(25);
-        presentarHeroe("Iron Man", 100);
+        presentarHeroe(heroe, energia);
 
 
         imprimir("resultado:");

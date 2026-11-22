@@ -33,6 +33,19 @@ class EjecutorJARVIS:
 
             tipo = expresion["tipo"]
 
+
+            # IDENTIFICADORES DE VARIABLES
+            if tipo == "identificador":
+
+                nombre = expresion["nombre"]
+
+                if nombre not in self.variables:
+                    raise ValueError(
+                        f"La variable '{nombre}' no existe"
+                    )
+
+                return self.variables[nombre]
+
             if tipo in ("operacion", "comparacion"):
 
                 izquierda = self.evaluar(

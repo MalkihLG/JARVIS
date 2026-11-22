@@ -38,6 +38,20 @@ def obtener_tipo(valor):
 
         tipo = valor.get("tipo")
 
+
+        # IDENTIFICADORES DE VARIABLES
+        if tipo == "identificador":
+
+            nombre = valor["nombre"]
+
+            if nombre not in tabla_simbolos:
+                raise ErrorSemantico(
+                    f"La variable '{nombre}' no existe"
+                )
+
+            return tabla_simbolos[nombre]["tipo"]
+
+
         if tipo in ("operacion", "comparacion"):
 
             izquierda = obtener_tipo(
@@ -366,18 +380,17 @@ def analizar_instruccion(instruccion):
             tipo_esperado = parametro["tipo"]
             nombre_parametro = parametro["nombre"]
 
-            # VALIDAR ENTEROS LITERALES
-            if tipo_esperado == "entero" and type(argumento) is not int:
-                raise ErrorSemantico(
-                    f"La accion '{nombre}' espera un entero "
-                    f"en el parametro '{nombre_parametro}'"
-                )
+            # OBTENER EL TIPO REAL DEL ARGUMENTO
+            tipo_recibido = obtener_tipo(argumento)
 
-            # VALIDAR CADENAS LITERALES
-            if tipo_esperado == "cadenita" and not isinstance(argumento, str):
+            # COMPROBAR COMPATIBILIDAD
+            if not tipos_compatibles(tipo_esperado, tipo_recibido):
+
                 raise ErrorSemantico(
-                    f"La accion '{nombre}' espera una cadenita "
-                    f"en el parametro '{nombre_parametro}'"
+                    f"La accion '{nombre}' espera "
+                    f"{tipo_esperado} en el parametro "
+                    f"'{nombre_parametro}', "
+                    f"pero recibio {tipo_recibido}"
                 )
 
 
@@ -434,24 +447,37 @@ def analizar_programa(arbol):
     for instruccion in instrucciones:
         analizar_instruccion(instruccion)
 
-    # VALIDAR TAMBIEN LOS CUERPOS
-    # DE LAS FUNCIONES DECLARADAS
+    # GUARDAR VARIABLES DE LA MISION
     simbolos_mision = tabla_simbolos.copy()
 
+    # VALIDAR LOS CUERPOS DE LAS FUNCIONES
     for accion in tabla_acciones.values():
 
-        # CONTEXTO TEMPORAL PARA LA ACCION
+        # CREAR CONTEXTO TEMPORAL
         tabla_simbolos.clear()
         tabla_simbolos.update(simbolos_mision)
 
+        # REGISTRAR PARAMETROS DE LA FUNCION
+        for parametro in accion.get("parametros", []):
+
+            nombre_parametro = parametro["nombre"]
+            tipo_parametro = parametro["tipo"]
+
+            tabla_simbolos[nombre_parametro] = {
+                "tipo": tipo_parametro,
+                "valor": None
+            }
+
+        # ANALIZAR INSTRUCCIONES DE LA FUNCION
         for instruccion in accion["instrucciones"]:
             analizar_instruccion(instruccion)
 
-    # RESTAURAR SIMBOLOS DE LA MISION
+    # RESTAURAR VARIABLES DE LA MISION
     tabla_simbolos.clear()
     tabla_simbolos.update(simbolos_mision)
 
     return tabla_simbolos
+
 
 
 # ==========================================
