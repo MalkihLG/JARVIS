@@ -1,0 +1,26 @@
+sistema StarkLab {
+
+    modulo Reparaciones {
+
+        accion revisarArmadura() {
+            imprimir("Revisando sistema de armadura");
+        }
+
+        accion activarReparacion() {
+            imprimir("Protocolo de reparacion activado");
+        }
+    }
+
+    usar Reparaciones;
+
+    mision principal {
+
+        imprimir("INICIANDO SISTEMA DE REPARACIONES");
+
+        Reparaciones.revisarArmadura();
+
+        Reparaciones.activarReparacion();
+
+        imprimir("PROCESO FINALIZADO");
+    }
+}

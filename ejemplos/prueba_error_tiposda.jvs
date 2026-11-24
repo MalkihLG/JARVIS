@@ -1,0 +1,9 @@
+
+sistema StarkLab {
+    mision principal {
+        var energia: entero = "Iron Man";
+
+        imprimir("Verificando tipos de datos");
+        imprimir(energia);
+    }
+}

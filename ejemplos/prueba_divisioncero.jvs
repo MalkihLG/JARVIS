@@ -1,0 +1,15 @@
+
+sistema StarkLab {
+    mision principal {
+        var numero: entero = 100;
+        var divisor: entero = 0;
+
+        imprimir("INICIANDO PRUEBA DE DIVISION");
+
+        var resultado: decimal = numero / divisor;
+
+
+        imprimir(resultado);
+        imprimir("Prueba finalizada");
+    }
+}

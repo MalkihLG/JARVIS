@@ -1,0 +1,15 @@
+
+sistema StarkLab {
+    mision principal {
+        var contador: entero = 3;
+
+        imprimir("INICIANDO CUENTA REGRESIVA");
+
+        mientras (contador > 0) {
+            imprimir(contador);
+            contador -= 1;
+        }
+
+        imprimir("Cuenta regresiva terminada");
+    }
+}

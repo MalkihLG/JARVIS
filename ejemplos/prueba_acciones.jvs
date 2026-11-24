@@ -1,0 +1,24 @@
+
+sistema StarkLab {
+
+    accion usarPropulsor(consumo: entero) {
+        imprimir("Propulsor activado");
+        imprimir(consumo);
+    }
+
+    accion presentarHeroe(nombre: cadenita, energia: entero) {
+        imprimir("Datos del superheroe");
+        imprimir(nombre);
+        imprimir(energia);
+    }
+
+    mision principal {
+        imprimir("INICIANDO PRUEBA DE ACCIONES");
+
+        usarPropulsor(25);
+
+        presentarHeroe("Iron Man", 85);
+
+        imprimir("Prueba terminada");
+    }
+}

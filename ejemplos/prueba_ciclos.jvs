@@ -1,0 +1,12 @@
+
+sistema StarkLab {
+    mision principal {
+        imprimir("INICIANDO ESCANEO");
+
+        repetir (3) {
+            imprimir("Escaneando la ciudad...");
+        }
+
+        imprimir("Escaneo terminado");
+    }
+}

@@ -1,0 +1,16 @@
+sistema StarkLab {
+    mision principal {
+        var reactorActivo: logico = si paso;
+        var enemigosDetectados: logico = no paso;
+
+        imprimir("VERIFICANDO SISTEMAS DE JARVIS");
+
+        imprimir("Estado del reactor:");
+        imprimir(reactorActivo);
+
+        imprimir("Enemigos detectados:");
+        imprimir(enemigosDetectados);
+
+        imprimir("Verificacion finalizada");
+    }
+}

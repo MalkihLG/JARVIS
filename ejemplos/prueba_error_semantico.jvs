@@ -1,0 +1,13 @@
+
+sistema StarkLab {
+    mision principal {
+        var energia: entero = 100;
+
+        imprimir("VERIFICANDO SISTEMA");
+        imprimir(energia);
+
+        imprimir(reactor);
+
+        imprimir("Verificacion terminada");
+    }
+}

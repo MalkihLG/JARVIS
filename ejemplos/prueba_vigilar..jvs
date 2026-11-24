@@ -1,0 +1,22 @@
+sistema StarkLab {
+
+    mision principal {
+
+        estado energia: entero = 100;
+
+        vigilar (energia < 50) {
+
+            imprimir("ALERTA: ENERGIA BAJA");
+        }
+
+        imprimir("ENERGIA INICIAL:");
+        imprimir(energia);
+
+        energia = 80;
+
+        energia = 40;
+
+        imprimir("ENERGIA FINAL:");
+        imprimir(energia);
+    }
+}

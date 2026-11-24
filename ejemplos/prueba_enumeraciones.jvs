@@ -1,0 +1,21 @@
+sistema StarkLab {
+
+    enumeracion EstadoArmadura {
+        APAGADA,
+        ENCENDIDA,
+        REPARACION
+    }
+
+    mision principal {
+
+        var estadoActual: EstadoArmadura = EstadoArmadura.ENCENDIDA;
+
+        imprimir("ESTADO ACTUAL DE LA ARMADURA:");
+        imprimir(estadoActual);
+
+        si (estadoActual == EstadoArmadura.ENCENDIDA) {
+
+            imprimir("LA ARMADURA ESTA ENCENDIDA");
+        }
+    }
+}

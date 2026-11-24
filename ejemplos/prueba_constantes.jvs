@@ -1,0 +1,18 @@
+
+sistema StarkLab {
+
+    mision principal {
+
+        fijo energiaMaxima: entero = 100;
+
+        var energia: entero = 85;
+
+        imprimir("ENERGIA MAXIMA:");
+        imprimir(energiaMaxima);
+
+        imprimir("ENERGIA ACTUAL:");
+        imprimir(energia);
+
+        // energiaMaxima = 120;
+    }
+}

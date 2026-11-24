@@ -1,0 +1,16 @@
+
+sistema StarkLab {
+    mision principal {
+        var energia: entero = 75;
+
+        imprimir("VERIFICANDO ENERGIA");
+
+        si (energia >= 50) {
+            imprimir("Energia suficiente para la mision");
+        } sino {
+            imprimir("Energia insuficiente");
+        }
+
+        imprimir("Verificacion finalizada");
+    }
+}

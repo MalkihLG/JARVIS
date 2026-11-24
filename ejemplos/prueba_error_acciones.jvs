@@ -1,0 +1,17 @@
+
+sistema StarkLab {
+
+    accion activarArmadura(nombre: cadenita, energia: entero) {
+        imprimir("ACTIVANDO ARMADURA");
+        imprimir(nombre);
+        imprimir(energia);
+    }
+
+    mision principal {
+        imprimir("VERIFICANDO ACCIONES");
+
+        activarArmadura("Iron Man");
+
+        imprimir("Prueba finalizada");
+    }
+}

@@ -1,0 +1,31 @@
+sistema StarkLab {
+
+    mision principal {
+
+        var energia: entero = 85;
+
+        var cociente: entero = energia div 4;
+        var residuo: entero = energia % 4;
+        var potencia: entero = 2 ** 3;
+
+        var trajeListo: logico = si paso;
+        var sistemaDanado: logico = no paso;
+
+        imprimir("DIVISION ENTERA:");
+        imprimir(cociente);
+
+        imprimir("RESIDUO:");
+        imprimir(residuo);
+
+        imprimir("POTENCIA:");
+        imprimir(potencia);
+
+        si (trajeListo y negar sistemaDanado) {
+            imprimir("SISTEMA LISTO PARA OPERAR");
+        }
+
+        si (sistemaDanado o energia > 80) {
+            imprimir("CONDICION LOGICA CORRECTA");
+        }
+    }
+}

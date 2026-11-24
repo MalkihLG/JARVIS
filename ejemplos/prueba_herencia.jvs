@@ -1,0 +1,33 @@
+sistema StarkLab {
+
+    clase Armadura {
+
+        publico var energia: entero = 100;
+
+        accion mostrarEnergia() {
+            imprimir("ENERGIA DE LA ARMADURA:");
+            imprimir(este.energia);
+        }
+    }
+
+    clase MarkL hereda Armadura {
+
+        publico var modelo: cadenita = "Mark L";
+
+        accion mostrarModelo() {
+            imprimir("MODELO:");
+            imprimir(este.modelo);
+        }
+    }
+
+    mision principal {
+
+        var traje: MarkL = crear MarkL();
+
+        traje.mostrarEnergia();
+
+        traje.mostrarModelo();
+
+        imprimir("HERENCIA FUNCIONANDO");
+    }
+}

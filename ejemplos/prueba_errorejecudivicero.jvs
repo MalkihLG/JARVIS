@@ -1,0 +1,15 @@
+sistema StarkLab {
+
+    mision principal {
+
+        var energia: entero = 100;
+
+        var divisor: entero = 0;
+
+        imprimir("INICIANDO CALCULO");
+
+        var resultado: decimal = energia / divisor;
+
+        imprimir(resultado);
+    }
+}

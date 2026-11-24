@@ -1,0 +1,10 @@
+sistema StarkLab {
+
+    mision principal {
+
+        var energia: entero = "cien";
+
+        imprimir("ENERGIA ACTUAL:");
+        imprimir(energia);
+    }
+}

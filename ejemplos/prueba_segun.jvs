@@ -1,0 +1,30 @@
+sistema StarkLab {
+
+    mision principal {
+
+        var nivel: entero = 2;
+
+        imprimir("VERIFICANDO NIVEL DE ARMADURA");
+
+        segun (nivel) {
+
+            caso 1: {
+                imprimir("Armadura basica");
+            }
+
+            caso 2: {
+                imprimir("Armadura avanzada");
+            }
+
+            caso 3: {
+                imprimir("Armadura de combate");
+            }
+
+            otro_caso: {
+                imprimir("Nivel desconocido");
+            }
+        }
+
+        imprimir("Verificacion terminada");
+    }
+}

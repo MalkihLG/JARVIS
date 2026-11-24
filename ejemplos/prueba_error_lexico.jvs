@@ -1,0 +1,12 @@
+
+sistema StarkLab {
+    mision principal {
+        var energia: entero = 100;
+
+        imprimir("VERIFICANDO ANALIZADOR LEXICO");
+
+        @
+
+        imprimir(energia);
+    }
+}

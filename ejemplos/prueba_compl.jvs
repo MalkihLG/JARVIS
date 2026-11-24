@@ -1,0 +1,169 @@
+sistema ControlArmaduraStark {
+
+    fijo energiaMaxima: entero = 100;
+    estado energia: entero = 90;
+
+    estructura Posicion {
+        coordenadaX: entero;
+        coordenadaY: entero;
+    }
+
+    clase Armadura {
+
+        publico var nombre: cadenita = "MARK 85";
+        publico var potencia: entero = 50;
+        publico var escudo: entero = 100;
+
+        publico accion mejorarPotencia(cantidad: entero) {
+            este.potencia += cantidad;
+        }
+
+        publico accion recibirDano(cantidad: entero) {
+            este.escudo -= cantidad;
+
+            si (este.escudo < 0) {
+                este.escudo = 0;
+            }
+        }
+
+        publico accion mostrarPotencia() -> entero {
+            devolver este.potencia;
+        }
+
+        publico accion mostrarEscudo() -> entero {
+            devolver este.escudo;
+        }
+    }
+
+    clase ArmaduraAvanzada hereda Armadura {
+
+        publico var misiles: entero = 5;
+
+        publico accion lanzarMisil() {
+            si (este.misiles > 0) {
+                este.misiles -= 1;
+                imprimir("MISIL LANZADO");
+            } sino {
+                imprimir("SIN MISILES DISPONIBLES");
+            }
+        }
+
+        publico accion mostrarMisiles() -> entero {
+            devolver este.misiles;
+        }
+    }
+
+    modulo Matematicas {
+
+        accion calcularDoble(numero: entero) -> entero {
+            devolver numero * 2;
+        }
+    }
+
+    accion factorial(n: entero) -> entero {
+        si (n <= 1) {
+            devolver 1;
+        } sino {
+            devolver n * factorial(n - 1);
+        }
+    }
+
+    mision principal {
+
+        imprimir("================================");
+        imprimir("SISTEMA STARK INDUSTRIES");
+        imprimir("CONTROL DE ARMADURA MARK 85");
+        imprimir("================================");
+
+        var traje: ArmaduraAvanzada = crear ArmaduraAvanzada();
+
+        imprimir("ESTADO INICIAL");
+
+        imprimir("POTENCIA:");
+        imprimir(traje.mostrarPotencia());
+
+        imprimir("ESCUDO:");
+        imprimir(traje.mostrarEscudo());
+
+        imprimir("MISILES:");
+        imprimir(traje.mostrarMisiles());
+
+        imprimir("MEJORANDO ARMADURA");
+
+        traje.mejorarPotencia(25);
+
+        imprimir("POTENCIA ACTUALIZADA:");
+        imprimir(traje.mostrarPotencia());
+
+        imprimir("SIMULACION DE COMBATE");
+
+        var danos: lista[entero] = [10, 20, 15];
+
+        var indice: entero = 0;
+
+        mientras (indice < 3) {
+
+            traje.recibirDano(danos[indice]);
+
+            imprimir("ATAQUE RECIBIDO");
+
+            imprimir("ESCUDO RESTANTE:");
+            imprimir(traje.mostrarEscudo());
+
+            indice += 1;
+        }
+
+        imprimir("ACTIVANDO ARMAMENTO");
+
+        traje.lanzarMisil();
+        traje.lanzarMisil();
+
+        imprimir("MISILES RESTANTES:");
+        imprimir(traje.mostrarMisiles());
+
+        imprimir("COMPROBANDO COORDENADAS");
+
+        var ubicacion: Posicion = crear Posicion(25, 40);
+
+        imprimir("POSICION X:");
+        imprimir(ubicacion.coordenadaX);
+
+        imprimir("POSICION Y:");
+        imprimir(ubicacion.coordenadaY);
+
+        imprimir("CALCULOS MATEMATICOS");
+
+        imprimir("DOBLE DE POTENCIA:");
+        imprimir(Matematicas.calcularDoble(75));
+
+        imprimir("FACTORIAL DE 5:");
+        imprimir(factorial(5));
+
+        imprimir("COMPROBANDO ENERGIA");
+
+        energia -= 30;
+
+        si (energia >= 50) {
+            imprimir("ENERGIA SUFICIENTE");
+        } sino {
+            imprimir("ENERGIA BAJA");
+        }
+
+        imprimir("ENERGIA FINAL:");
+        imprimir(energia);
+
+        imprimir("PRUEBA DE MANEJO DE ERRORES");
+
+        proteger {
+            lanzar "ALERTA DE SISTEMA";
+        } atrapar (error) {
+            imprimir("ERROR CONTROLADO CORRECTAMENTE");
+        } finalmente {
+            imprimir("PROTOCOLO FINALIZADO");
+        }
+
+        imprimir("================================");
+        imprimir("MISION COMPLETADA");
+        imprimir("================================");
+    }
+}

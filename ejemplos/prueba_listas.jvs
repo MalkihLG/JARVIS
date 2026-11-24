@@ -1,0 +1,24 @@
+sistema StarkLab {
+
+    mision principal {
+
+        var energias: lista[entero] = [100, 85, 60, 40];
+
+        var total: entero = 0;
+
+        imprimir("ENERGIAS REGISTRADAS:");
+
+        para (var energia en energias) {
+
+            imprimir(energia);
+
+            total += energia;
+        }
+
+        imprimir("ENERGIA TOTAL:");
+        imprimir(total);
+
+        imprimir("PRIMER REGISTRO:");
+        imprimir(energias[0]);
+    }
+}

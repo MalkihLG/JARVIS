@@ -1,0 +1,14 @@
+sistema StarkLab {
+
+    mision principal {
+
+        imprimir("BIENVENIDO A JARVIS");
+
+        var heroe: cadenita = preguntar("Escribe tu nombre:");
+
+        imprimir("HOLA, BIENVENIDO:");
+        imprimir(heroe);
+
+        imprimir("IDENTIFICACION COMPLETADA");
+    }
+}

@@ -1,0 +1,21 @@
+
+sistema StarkLab {
+    mision principal {
+        var energia: entero = 65;
+
+        imprimir("VERIFICANDO NIVEL DE ENERGIA");
+
+        si (energia >= 80) {
+            imprimir("Energia alta");
+            imprimir("Armadura lista para combate");
+        } sinosi (energia >= 40) {
+            imprimir("Energia media");
+            imprimir("Armadura en modo ahorro");
+        } sino {
+            imprimir("Energia baja");
+            imprimir("Es necesario recargar");
+        }
+
+        imprimir("Verificacion finalizada");
+    }
+}

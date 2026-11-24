@@ -1,0 +1,20 @@
+
+sistema StarkLab {
+
+    clase Traje {
+
+        accion encender() {
+            imprimir("Armadura encendida correctamente");
+        }
+
+    }
+
+    mision principal {
+
+        var traje: Traje = crear Traje();
+
+        traje.encender();
+
+        imprimir("JARVIS funcionando correctamente");
+    }
+}

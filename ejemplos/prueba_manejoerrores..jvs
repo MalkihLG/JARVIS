@@ -1,0 +1,25 @@
+sistema StarkLab {
+
+    mision principal {
+
+        imprimir("INICIANDO SISTEMA JARVIS");
+
+        proteger {
+
+            imprimir("Verificando armadura");
+
+            lanzar "Falla en el reactor";
+
+        } atrapar (problema) {
+
+            imprimir("ERROR CAPTURADO:");
+            imprimir(problema);
+
+        } finalmente {
+
+            imprimir("REVISION FINALIZADA");
+        }
+
+        imprimir("JARVIS SIGUE FUNCIONANDO");
+    }
+}

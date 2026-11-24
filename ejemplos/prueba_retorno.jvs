@@ -1,0 +1,22 @@
+sistema StarkLab {
+
+    accion calcularEnergia(energia: entero, recarga: entero) -> entero {
+
+        var resultado: entero = energia + recarga;
+
+        devolver resultado;
+    }
+
+    mision principal {
+
+        var energiaInicial: entero = 50;
+
+        var energiaFinal: entero = calcularEnergia(energiaInicial, 30);
+
+        imprimir("ENERGIA INICIAL:");
+        imprimir(energiaInicial);
+
+        imprimir("ENERGIA DESPUES DE RECARGAR:");
+        imprimir(energiaFinal);
+    }
+}

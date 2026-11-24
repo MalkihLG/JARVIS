@@ -1,0 +1,21 @@
+sistema StarkLab {
+
+    mision principal {
+
+        var armaduras: mapa[cadenita, entero] = {
+            "Mark I": 50,
+            "Mark III": 85,
+            "Mark L": 100
+        };
+
+        imprimir("CONSULTANDO ARMADURAS:");
+
+        imprimir("ENERGIA DE MARK III:");
+        imprimir(armaduras["Mark III"]);
+
+        armaduras["Mark III"] = 95;
+
+        imprimir("ENERGIA ACTUALIZADA:");
+        imprimir(armaduras["Mark III"]);
+    }
+}

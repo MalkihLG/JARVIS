@@ -1,0 +1,16 @@
+
+sistema StarkLab {
+    mision principal {
+        var numero1: entero = 20;
+        var numero2: entero = 5;
+
+        var suma: entero = numero1 + numero2;
+        var resta: entero = numero1 - numero2;
+        var multiplicacion: entero = numero1 * numero2;
+
+        imprimir("RESULTADOS DE OPERACIONES");
+        imprimir(suma);
+        imprimir(resta);
+        imprimir(multiplicacion);
+    }
+}
