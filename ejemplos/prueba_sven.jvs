@@ -1,0 +1,159 @@
+
+sistema TiendaJarvis {
+
+    fijo descuentoEspecial: decimal = 0.10;
+
+    clase Producto {
+
+        publico var nombre: cadenita = "SIN NOMBRE";
+        publico var precio: decimal = 0.0;
+        publico var existencia: entero = 0;
+
+        publico accion configurar(
+            nuevoNombre: cadenita,
+            nuevoPrecio: decimal,
+            nuevaExistencia: entero
+        ) {
+            este.nombre = nuevoNombre;
+            este.precio = nuevoPrecio;
+            este.existencia = nuevaExistencia;
+        }
+
+        publico accion vender(cantidad: entero) -> logico {
+
+            si (cantidad <= 0) {
+                devolver no paso;
+            }
+
+            si (cantidad > este.existencia) {
+                devolver no paso;
+            }
+
+            este.existencia -= cantidad;
+            devolver si paso;
+        }
+
+        publico accion obtenerExistencia() -> entero {
+            devolver este.existencia;
+        }
+
+        publico accion obtenerPrecio() -> decimal {
+            devolver este.precio;
+        }
+    }
+
+    accion calcularSubtotal(
+        precio: decimal,
+        cantidad: entero
+    ) -> decimal {
+        devolver precio * cantidad;
+    }
+
+    accion calcularDescuento(subtotal: decimal) -> decimal {
+        devolver subtotal * descuentoEspecial;
+    }
+
+    mision principal {
+
+        imprimir("================================");
+        imprimir("SISTEMA DE INVENTARIO JARVIS");
+        imprimir("================================");
+
+        var producto: Producto = crear Producto();
+
+        producto.configurar("TECLADO MECANICO", 500.0, 20);
+
+        imprimir("PRODUCTO REGISTRADO");
+
+        imprimir("PRECIO UNITARIO:");
+        imprimir(producto.obtenerPrecio());
+
+        imprimir("EXISTENCIA INICIAL:");
+        imprimir(producto.obtenerExistencia());
+
+        var cantidades: lista[entero] = [2, 3, 1];
+
+        var indice: entero = 0;
+        var totalVendido: entero = 0;
+        var ingresos: decimal = 0.0;
+
+        imprimir("================================");
+        imprimir("REGISTRO DE VENTAS");
+        imprimir("================================");
+
+        mientras (indice < 3) {
+
+            var cantidad: entero = cantidades[indice];
+
+            si (producto.vender(cantidad)) {
+
+                var subtotal: decimal = calcularSubtotal(
+                    producto.obtenerPrecio(),
+                    cantidad
+                );
+
+                imprimir("VENTA REALIZADA");
+
+                imprimir("CANTIDAD:");
+                imprimir(cantidad);
+
+                imprimir("SUBTOTAL:");
+                imprimir(subtotal);
+
+                ingresos += subtotal;
+                totalVendido += cantidad;
+
+            } sino {
+                imprimir("VENTA RECHAZADA");
+            }
+
+            indice += 1;
+        }
+
+        imprimir("================================");
+        imprimir("PRUEBA DE STOCK INSUFICIENTE");
+        imprimir("================================");
+
+        si (producto.vender(50)) {
+            imprimir("ERROR: VENTA NO DEBIDA");
+        } sino {
+            imprimir("VENTA RECHAZADA CORRECTAMENTE");
+        }
+
+        imprimir("================================");
+        imprimir("REPORTE FINAL");
+        imprimir("================================");
+
+        imprimir("UNIDADES VENDIDAS:");
+        imprimir(totalVendido);
+
+        imprimir("EXISTENCIA FINAL:");
+        imprimir(producto.obtenerExistencia());
+
+        imprimir("INGRESOS BRUTOS:");
+        imprimir(ingresos);
+
+        imprimir("DESCUENTO ESPECIAL:");
+        imprimir(calcularDescuento(ingresos));
+
+        imprimir("INGRESOS CON DESCUENTO:");
+        imprimir(ingresos - calcularDescuento(ingresos));
+
+        imprimir("================================");
+        imprimir("PRUEBA DE MANEJO DE ERRORES");
+        imprimir("================================");
+
+        proteger {
+            lanzar "ALERTA DE INVENTARIO";
+        } atrapar (error) {
+            imprimir("ERROR CONTROLADO CORRECTAMENTE");
+        } finalmente {
+            imprimir("REVISION FINALIZADA");
+        }
+
+        imprimir("================================");
+        imprimir("INVENTARIO FINALIZADO");
+        imprimir("================================");
+    }
+}
+
