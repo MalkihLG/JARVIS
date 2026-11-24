@@ -1,12 +1,19 @@
+"""Analizador lexico del lenguaje JARVIS mediante PLY.
 
+Se reconocen palabras reservadas, identificadores, valores, operadores,
+delimitadores y comentarios.
+
+La estructura y el significado de las instrucciones se comprueban
+posteriormente en asintactico.py y asemantico.py.
+"""
+
+import math
 import ply.lex as lex
 
 
-# Aqui guardo las palabras que tienen un significado especial en JARVIS.
-# Cada palabra se relaciona con el token que va a reconocer el lexer.
+# Aqui registro las palabras reservadas y el token que representa cada una.
 reservadas = {
-
-    # Estas palabras las uso para organizar el programa y sus acciones.
+    # Estructura del programa y acciones.
     "sistema": "SISTEMA",
     "mision": "MISION",
     "principal": "PRINCIPAL",
@@ -14,7 +21,7 @@ reservadas = {
     "ejecutar": "EJECUTAR",
     "devolver": "DEVOLVER",
 
-    # Aqui estan las palabras para declarar variables y sus tipos.
+    # Variables, tipos de datos y estructuras.
     "var": "VAR",
     "fijo": "FIJO",
     "estado": "ESTADO",
@@ -28,14 +35,14 @@ reservadas = {
     "vacio": "VACIO",
     "nada": "NADA",
 
-    # Palabras relacionadas con mostrar, pedir o registrar informacion.
+    # Entrada, salida y seguimiento del programa.
     "imprimir": "IMPRIMIR",
     "preguntar": "PREGUNTAR",
     "alerta": "ALERTA",
     "registrar": "REGISTRAR",
     "checar": "CHECAR",
 
-    # Estas palabras sirven para tomar decisiones.
+    # Condiciones.
     "si": "SI",
     "sinosi": "SINOSI",
     "sino": "SINO",
@@ -43,7 +50,7 @@ reservadas = {
     "caso": "CASO",
     "otro_caso": "OTRO_CASO",
 
-    # Aqui estan las palabras para los ciclos.
+    # Ciclos y control de flujo.
     "para": "PARA",
     "mientras": "MIENTRAS",
     "repetir": "REPETIR",
@@ -51,20 +58,20 @@ reservadas = {
     "seguir": "SEGUIR",
     "en": "EN",
 
-    # Operadores que se escriben como palabras.
+    # Operadores escritos como palabras.
     "y": "Y",
     "o": "O",
     "negar": "NEGAR",
     "div": "DIV_ENTERA",
 
-    # Estas palabras las agregue para otras funciones del lenguaje.
+    # Manejo de errores.
     "vigilar": "VIGILAR",
     "proteger": "PROTEGER",
     "atrapar": "ATRAPAR",
     "lanzar": "LANZAR",
     "finalmente": "FINALMENTE",
 
-    # Palabras que pueden utilizarse para trabajar con clases y objetos.
+    # Clases y objetos.
     "clase": "CLASE",
     "crear": "CREAR",
     "este": "ESTE",
@@ -73,7 +80,7 @@ reservadas = {
     "privado": "PRIVADO",
     "hereda": "HEREDA",
 
-    # Por ultimo dejo las palabras para modulos y estructuras.
+    # Modulos y estructuras personalizadas.
     "usar": "USAR",
     "modulo": "MODULO",
     "estructura": "ESTRUCTURA",
@@ -81,57 +88,26 @@ reservadas = {
 }
 
 
-# Esta lista contiene los tokens que puede encontrar el analizador.
-# Al final tambien agrego los tokens de las palabras reservadas.
+# Mantengo los nombres originales: otros modulos ya los utilizan.
 tokens = [
-    "IDENTIFICADOR",
-    "NUMERO",
-    "CADENA",
-    "CARACTER",
-    "SI_PASO",
-    "NO_PASO",
+    "IDENTIFICADOR", "NUMERO", "CADENA", "CARACTER",
+    "SI_PASO", "NO_PASO",
 
-    # Tokens para las operaciones matematicas.
-    "SUMA",
-    "RESTA",
-    "MULTIPLICACION",
-    "DIVISION",
-    "RESIDUO",
-    "POTENCIA",
+    "SUMA", "RESTA", "MULTIPLICACION", "DIVISION",
+    "RESIDUO", "POTENCIA",
 
-    # Tokens para comparar valores.
-    "IGUAL",
-    "DIFERENTE",
-    "MAYOR",
-    "MENOR",
-    "MAYORIGUAL",
-    "MENORIGUAL",
+    "IGUAL", "DIFERENTE", "MAYOR", "MENOR",
+    "MAYORIGUAL", "MENORIGUAL",
 
-    # Estos se usan cuando se asignan o actualizan valores.
-    "ASIGNAR",
-    "MASIGUAL",
-    "MENOSIGUAL",
-    "PORIGUAL",
-    "DIVIGUAL",
+    "ASIGNAR", "MASIGUAL", "MENOSIGUAL", "PORIGUAL", "DIVIGUAL",
 
-    # Simbolos que ayudan a separar las partes del codigo.
-    "PARIZQ",
-    "PARDER",
-    "LLAVEIZQ",
-    "LLAVEDER",
-    "CORCHETEIZQ",
-    "CORCHETEDER",
-    "PUNTOYCOMA",
-    "DOSPUNTOS",
-    "COMA",
-    "PUNTO",
-    "FLECHA",
-
+    "PARIZQ", "PARDER", "LLAVEIZQ", "LLAVEDER",
+    "CORCHETEIZQ", "CORCHETEDER",
+    "PUNTOYCOMA", "DOSPUNTOS", "COMA", "PUNTO", "FLECHA",
 ] + list(reservadas.values())
 
 
-# Aqui defino como se escribe cada operador.
-# Uso expresiones regulares para que PLY pueda reconocerlos.
+# Los operadores compuestos deben reconocerse antes que sus versiones simples.
 t_POTENCIA = r"\*\*"
 t_MASIGUAL = r"\+="
 t_MENOSIGUAL = r"-="
@@ -142,7 +118,6 @@ t_IGUAL = r"=="
 t_DIFERENTE = r"!="
 t_MAYORIGUAL = r">="
 t_MENORIGUAL = r"<="
-
 t_FLECHA = r"->"
 
 t_SUMA = r"\+"
@@ -150,31 +125,32 @@ t_RESTA = r"-"
 t_MULTIPLICACION = r"\*"
 t_DIVISION = r"/"
 t_RESIDUO = r"%"
-
 t_MAYOR = r">"
 t_MENOR = r"<"
 t_ASIGNAR = r"="
 
-# Tambien defino los signos que aparecen en las instrucciones.
+# Delimitadores.
 t_PARIZQ = r"\("
 t_PARDER = r"\)"
 t_LLAVEIZQ = r"\{"
 t_LLAVEDER = r"\}"
 t_CORCHETEIZQ = r"\["
 t_CORCHETEDER = r"\]"
-
 t_PUNTOYCOMA = r";"
 t_DOSPUNTOS = r":"
 t_COMA = r","
 t_PUNTO = r"\."
 
+# Los espacios, tabulaciones y retornos de carro no producen tokens.
+t_ignore = " \t\r"
 
-# Los espacios y tabulaciones no necesitan convertirse en tokens.
-t_ignore = " \t"
+
+def _informar_error(t, descripcion):
+    """Mantengo el formato de mensajes utilizado por la interfaz actual."""
+    print(f"Error lexico en la linea {t.lineno}: {descripcion}")
 
 
-# En JARVIS uso "si paso" y "no paso" como valores logicos.
-# Los reconozco completos antes de revisar los identificadores.
+# Primero detecto los literales logicos escritos con dos palabras.
 def t_SI_PASO(t):
     r"si[ \t]+paso\b"
     return t
@@ -185,79 +161,95 @@ def t_NO_PASO(t):
     return t
 
 
-# Los comentarios de una linea empiezan con // y no generan tokens.
+# Ignoro los comentarios que terminan al llegar a un salto de linea.
 def t_COMENTARIO_LINEA(t):
     r"//[^\n]*"
     pass
 
 
-# Para comentarios de varias lineas uso /* y */.
-# Tambien cuento sus saltos de linea para ubicar posibles errores.
+# Busco el cierre de los comentarios de bloque y cuento sus saltos de linea.
+# Tambien detecto cuando el comentario llega al final sin cerrar.
 def t_COMENTARIO_BLOQUE(t):
-    r"/\*[\s\S]*?\*/"
-    t.lexer.lineno += t.value.count("\n")
+    r"/\*"
+    datos = t.lexer.lexdata
+    inicio_contenido = t.lexer.lexpos
+    cierre = datos.find("*/", inicio_contenido)
+
+    if cierre == -1:
+        _informar_error(t, "comentario de bloque sin cerrar")
+        t.lexer.lineno += datos[inicio_contenido:].count("\n")
+        t.lexer.lexpos = len(datos)
+        return
+
+    t.lexer.lineno += datos[inicio_contenido:cierre + 2].count("\n")
+    t.lexer.lexpos = cierre + 2
 
 
-# Las cadenas son textos escritos entre comillas dobles.
+# Devuelvo la cadena con comillas para conservar el formato anterior.
 def t_CADENA(t):
     r'"([^"\\\n]|\\.)*"'
     return t
 
 
-# Los caracteres van entre comillas simples.
+# Si una cadena no cierra antes del fin de la linea, reporto el problema.
+def t_CADENA_SIN_CERRAR(t):
+    r'"[^\n]*'
+    _informar_error(t, "cadena de texto sin cerrar")
+
+
+# El caracter puede ser uno normal o un caracter escapado.
 def t_CARACTER(t):
     r"'([^'\\\n]|\\.)'"
     return t
 
 
-# Aqui reconozco los numeros enteros y decimales.
+# Los caracteres con mas de un simbolo o sin cierre no son validos.
+def t_CARACTER_INVALIDO(t):
+    r"'[^\n]*"
+    _informar_error(t, "literal de caracter invalido o sin cerrar")
+
+
+# Reconozco enteros, decimales y notacion cientifica.
+# Todos se conservan como int o float para los modulos existentes.
 def t_NUMERO(t):
-    r"\d+(\.\d+)?"
-
-    # Si tiene un punto lo guardo como decimal.
-    if "." in t.value:
-        t.value = float(t.value)
-    else:
-        t.value = int(t.value)
-
+    r"(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?"
+    try:
+        if "." in t.value or "e" in t.value.lower():
+            t.value = float(t.value)
+            if not math.isfinite(t.value):
+                raise ValueError("numero fuera de rango")
+        else:
+            t.value = int(t.value)
+    except (ValueError, OverflowError):
+        _informar_error(t, "numero invalido o fuera de rango")
+        return None
     return t
 
 
-# Los identificadores son nombres de variables, acciones o sistemas.
+# Las palabras reservadas tienen prioridad sobre un identificador normal.
 def t_IDENTIFICADOR(t):
     r"[a-zA-Z_][a-zA-Z0-9_]*"
-
-    # Primero compruebo si la palabra es reservada.
-    # Si no aparece en el diccionario, queda como identificador.
-    t.type = reservadas.get(
-        t.value, "IDENTIFICADOR"
-    )
-
+    t.type = reservadas.get(t.value, "IDENTIFICADOR")
     return t
 
 
-# Cada salto de linea aumenta el contador del lexer.
+# Cada salto de linea incrementa su posicion en el codigo.
 def t_newline(t):
     r"\n+"
     t.lexer.lineno += len(t.value)
 
 
-# Si encuentro un caracter desconocido, muestro donde ocurrio.
-# Despues avanzo un caracter para continuar con el analisis.
+# Un simbolo que no pertenece al lenguaje genera un mensaje de error.
 def t_error(t):
-    print(
-        f"Error lexico en la linea {t.lineno}: "
-        f"caracter no reconocido '{t.value[0]}'"
-    )
+    _informar_error(t, f"caracter no reconocido '{t.value[0]}'")
     t.lexer.skip(1)
 
 
-# Con todas las reglas anteriores creo el analizador de PLY.
+# Este objeto sigue siendo el que importan los demas archivos de JARVIS.
 lexer = lex.lex()
 
 
-# Este codigo me sirve para probar los tokens de JARVIS.
-# Incluye variables, condiciones, ciclos y llamadas a acciones.
+# Solo es un ejemplo para probar los tokens, no para ejecutar el programa.
 codigo = '''
 sistema StarkLab {
 
@@ -268,12 +260,15 @@ sistema StarkLab {
     var enemigo: logico = no paso;
     var heroe: cadenita = "Iron Man";
 
-    vigilar (energia < 30) {
-        alerta("Energia baja");
-    }
+    // Se revisa el estado del sistema.
+
+    /* Comentario
+       de varias lineas. */
 
     accion usarPropulsor(consumo: entero) {
+
         energia -= consumo;
+
         registrar("Propulsor activado");
     }
 
@@ -282,31 +277,27 @@ sistema StarkLab {
         imprimir("Bienvenido a JARVIS");
 
         si (trajeListo == si paso) {
+
             imprimir(heroe);
+
+        } sinosi (energia < 30) {
+
+            alerta("Energia baja");
+
         } sino {
-            alerta("Armadura no disponible");
-        }
 
-        repetir (3) {
-            usarPropulsor(25);
+            imprimir("Sistema preparado");
         }
-
-        imprimir(energia);
     }
 }
 '''
 
 
-# Esta parte solo se ejecuta cuando pruebo lexer.py directamente.
 if __name__ == "__main__":
-
-    # Le paso el programa de prueba al analizador.
+    # Compruebo el analizador sin afectar los demas modulos.
+    lexer.lineno = 1
     lexer.input(codigo)
-
     print("========== TOKENS DE JARVIS ==========")
-
-    # Recorro los tokens para ver que reconoce cada palabra o simbolo.
     for token in lexer:
         print(f"{token.type:20} | {token.value}")
-
     print("========== FIN DEL ANALISIS ==========")

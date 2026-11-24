@@ -1,58 +1,20 @@
+"""Analizador sintactico del lenguaje JARVIS mediante PLY.
 
+Se comprueba la estructura del programa y se construye un AST.
+Las reglas semanticas y la ejecucion corresponden a otros modulos.
+"""
+
+import ast as python_ast
 import ply.yacc as yacc
-from alexico import lexer
 
-# ==========================================
-# JARVIS - ANALIZADOR SINTACTICO
-# VARIABLES, OPERACIONES, CONDICIONES,
-# CICLOS Y FUNCIONES CON PARAMETROS
-# ==========================================
+from alexico import lexer, tokens
 
-# 1. TOKENS UTILIZADOS EN LA GRAMATICA
-tokens = (
-    # Estructura principal
-    "SISTEMA", "MISION", "PRINCIPAL",
-    "ACCION", "IDENTIFICADOR",
 
-    # Variables y tipos
-    "VAR", "ENTERO", "DECIMAL",
-    "CADENITA", "LOGICO",
-    "NUMERO", "CADENA",
-    "SI_PASO", "NO_PASO",
 
-    # Entrada y salida
-    "IMPRIMIR",
-
-    # Operaciones matematicas
-    "SUMA", "RESTA",
-    "MULTIPLICACION", "DIVISION",
-
-    # Comparaciones
-    "IGUAL", "DIFERENTE",
-    "MAYOR", "MENOR",
-    "MAYORIGUAL", "MENORIGUAL",
-
-    # Asignaciones
-    "ASIGNAR", "MASIGUAL",
-    "MENOSIGUAL", "PORIGUAL",
-    "DIVIGUAL",
-
-    # Condiciones y ciclos
-    "SI", "SINO",
-    "REPETIR", "MIENTRAS",
-
-    # Simbolos
-    "PARIZQ", "PARDER",
-    "LLAVEIZQ", "LLAVEDER",
-    "PUNTOYCOMA", "DOSPUNTOS",
-    "COMA",
-)
-
-# ==========================================
-# 2. PRIORIDAD DE OPERADORES
-# ==========================================
-
+# Se establece la prioridad de las expresiones del lenguaje.
 precedence = (
+    ("left", "O"),
+    ("left", "Y"),
     (
         "nonassoc",
         "IGUAL", "DIFERENTE",
@@ -60,411 +22,1348 @@ precedence = (
         "MAYORIGUAL", "MENORIGUAL"
     ),
     ("left", "SUMA", "RESTA"),
-    ("left", "MULTIPLICACION", "DIVISION"),
+    (
+        "left",
+        "MULTIPLICACION",
+        "DIVISION",
+        "DIV_ENTERA",
+        "RESIDUO"
+    ),
+    ("right", "NEGAR", "UMENOS", "UMAS"),
+    ("right", "POTENCIA"),
+    ("left", "PUNTO", "PARIZQ", "CORCHETEIZQ"),
 )
 
 
-# ==========================================
-# 3. ESTRUCTURA DEL SISTEMA
-# ==========================================
-
+# Se organiza el contenido del sistema y se conserva el AST original.
 def p_programa(p):
-    """
-    programa : SISTEMA IDENTIFICADOR LLAVEIZQ acciones mision LLAVEDER
-    """
+    "programa : SISTEMA IDENTIFICADOR LLAVEIZQ elementos LLAVEDER"
+
+    elementos = p[4]
+
+    principales = [
+        elemento
+        for elemento in elementos
+        if elemento["tipo"] == "mision"
+        and elemento["nombre"] == "principal"
+    ]
+
+    if len(principales) != 1:
+        raise SyntaxError(
+            "JARVIS requiere exactamente una mision principal"
+        )
+
+    acciones = [
+        elemento
+        for elemento in elementos
+        if elemento["tipo"] == "accion"
+    ]
 
     p[0] = {
         "tipo": "sistema",
         "nombre": p[2],
-        "acciones": p[4],
-        "mision": p[5]
+        "acciones": acciones,
+        "mision": principales[0],
+        "misiones": [
+            elemento for elemento in elementos
+            if elemento["tipo"] == "mision"
+            and elemento["nombre"] != "principal"
+        ],
+        "globales": [
+            elemento for elemento in elementos
+            if elemento["tipo"] == "variable"
+        ],
+        "vigilancias": [
+            elemento for elemento in elementos
+            if elemento["tipo"] == "vigilar"
+        ],
+        "definiciones": [
+            elemento for elemento in elementos
+            if elemento["tipo"] in (
+                "clase",
+                "modulo",
+                "estructura",
+                "enumeracion",
+                "usar"
+            )
+        ],
+        "elementos": elementos,
     }
 
 
-def p_acciones_varias(p):
+# Se agrupan los elementos que forman parte del sistema.
+def p_elementos(p):
     """
-    acciones : acciones accion
-    """
-
-    p[0] = p[1] + [p[2]]
-
-
-def p_acciones_vacias(p):
-    """
-    acciones :
+    elementos : elementos elemento
+              | vacio
     """
 
-    p[0] = []
+    p[0] = p[1] + [p[2]] if len(p) == 3 else []
 
 
-# ==========================================
-# 4. FUNCIONES ACCION CON VARIOS PARAMETROS
-# ==========================================
-
-def p_accion(p):
+# Se identifican las declaraciones permitidas a nivel de sistema.
+def p_elemento(p):
     """
-    accion : ACCION IDENTIFICADOR PARIZQ PARDER LLAVEIZQ instrucciones LLAVEDER
-           | ACCION IDENTIFICADOR PARIZQ lista_parametros PARDER LLAVEIZQ instrucciones LLAVEDER
-    """
-
-    # FUNCION SIN PARAMETROS
-    if len(p) == 8:
-
-        parametros = []
-        instrucciones = p[6]
-
-    # FUNCION CON PARAMETROS
-    else:
-
-        parametros = p[4]
-        instrucciones = p[7]
-
-    p[0] = {
-        "tipo": "accion",
-        "nombre": p[2],
-        "parametros": parametros,
-        "instrucciones": instrucciones
-    }
-
-
-# UN SOLO PARAMETRO
-def p_lista_parametros_uno(p):
-    """
-    lista_parametros : IDENTIFICADOR DOSPUNTOS tipo
+    elemento : accion
+             | mision
+             | declaracion PUNTOYCOMA
+             | vigilancia
+             | clase
+             | modulo
+             | estructura
+             | enumeracion
+             | importar
     """
 
-    p[0] = [
-        {
-            "nombre": p[1],
-            "tipo": p[3]
-        }
-    ]
+    p[0] = p[1]
 
 
-# DOS O MAS PARAMETROS
-def p_lista_parametros_varios(p):
-    """
-    lista_parametros : lista_parametros COMA IDENTIFICADOR DOSPUNTOS tipo
-    """
-
-    p[0] = p[1] + [
-        {
-            "nombre": p[3],
-            "tipo": p[5]
-        }
-    ]
-
-
-# ==========================================
-# 5. MISION PRINCIPAL
-# ==========================================
-
+# Se reconocen la mision principal y las misiones secundarias.
 def p_mision(p):
     """
-    mision : MISION PRINCIPAL LLAVEIZQ instrucciones LLAVEDER
+    mision : MISION PRINCIPAL bloque
+           | MISION IDENTIFICADOR bloque
     """
 
     p[0] = {
         "tipo": "mision",
-        "nombre": "principal",
-        "instrucciones": p[4]
-    }
-
-
-# ==========================================
-# 6. LISTA DE INSTRUCCIONES
-# ==========================================
-
-def p_instrucciones_varias(p):
-    """
-    instrucciones : instrucciones instruccion
-    """
-
-    p[0] = p[1] + [p[2]]
-
-
-def p_instrucciones_una(p):
-    """
-    instrucciones : instruccion
-    """
-
-    p[0] = [p[1]]
-
-
-# ==========================================
-# 7. DECLARACION DE VARIABLES
-# ==========================================
-
-def p_instruccion_variable(p):
-    """
-    instruccion : VAR IDENTIFICADOR DOSPUNTOS tipo ASIGNAR valor PUNTOYCOMA
-    """
-
-    p[0] = {
-        "tipo": "variable",
         "nombre": p[2],
-        "dato": p[4],
-        "valor": p[6]
+        "instrucciones": p[3]
     }
 
 
-# ==========================================
-# 8. ACTUALIZACION DE VARIABLES
-# ==========================================
-
-def p_instruccion_actualizar(p):
+# Se reconocen acciones con parametros y retorno opcionales.
+def p_accion(p):
     """
-    instruccion : IDENTIFICADOR ASIGNAR valor PUNTOYCOMA
-                | IDENTIFICADOR MASIGUAL valor PUNTOYCOMA
-                | IDENTIFICADOR MENOSIGUAL valor PUNTOYCOMA
-                | IDENTIFICADOR PORIGUAL valor PUNTOYCOMA
-                | IDENTIFICADOR DIVIGUAL valor PUNTOYCOMA
+    accion : ACCION nombre_accion PARIZQ parametros_opt PARDER retorno_opt bloque
     """
 
     p[0] = {
-        "tipo": "asignacion",
-        "nombre": p[1],
-        "operador": p[2],
-        "valor": p[3]
+        "tipo": "accion",
+        "nombre": p[2],
+        "parametros": p[4],
+        "retorno": p[6],
+        "instrucciones": p[7]
     }
 
 
-# ==========================================
-# 9. TIPOS DE DATOS
-# ==========================================
+# Se permite utilizar un identificador o iniciar como nombre de accion.
+def p_nombre_accion(p):
+    """
+    nombre_accion : IDENTIFICADOR
+                  | INICIAR
+    """
 
-def p_tipo(p):
+    p[0] = p[1]
+
+
+# Se reconoce el tipo de retorno declarado por una accion.
+def p_retorno_opt(p):
+    """
+    retorno_opt : FLECHA tipo
+                | vacio
+    """
+
+    p[0] = p[2] if len(p) == 3 else None
+
+
+# Se permite declarar acciones con o sin parametros.
+def p_parametros_opt(p):
+    """
+    parametros_opt : parametros
+                   | vacio
+    """
+
+    p[0] = p[1]
+
+
+# Se agrupan los parametros de una accion.
+def p_parametros(p):
+    """
+    parametros : parametros COMA parametro
+               | parametro
+    """
+
+    p[0] = p[1] + [p[3]] if len(p) == 4 else [p[1]]
+
+
+# Se almacena el nombre y el tipo de cada parametro.
+def p_parametro(p):
+    """
+    parametro : IDENTIFICADOR DOSPUNTOS tipo
+    """
+
+    p[0] = {
+        "nombre": p[1],
+        "tipo": p[3]
+    }
+
+
+# Se reconocen los tipos de datos basicos de JARVIS.
+def p_tipo_basico(p):
     """
     tipo : ENTERO
          | DECIMAL
          | CADENITA
          | LOGICO
+         | CARACTER_TIPO
+         | VACIO
     """
 
     p[0] = p[1]
 
-# ==========================================
-# 10. VALORES
-# ==========================================
 
-def p_valor(p):
+# Se reconocen los tipos personalizados definidos por el programa.
+def p_tipo_personalizado(p):
     """
-    valor : CADENA
-          | NUMERO
-          | SI_PASO
-          | NO_PASO
-          | IDENTIFICADOR
+    tipo : IDENTIFICADOR
     """
 
-    tipo_token = p.slice[1].type
+    p[0] = {
+        "tipo": "personalizado",
+        "nombre": p[1]
+    }
 
-    # CADENAS DE TEXTO
-    if tipo_token == "CADENA":
 
-        p[0] = p[1][1:-1]
+# Se reconocen las listas con un tipo de elemento.
+def p_tipo_lista(p):
+    """
+    tipo : LISTA CORCHETEIZQ tipo CORCHETEDER
+    """
 
-    # IDENTIFICADORES DE VARIABLES
-    elif tipo_token == "IDENTIFICADOR":
+    p[0] = {
+        "tipo": "lista",
+        "elemento": p[3]
+    }
+
+
+# Se reconocen los mapas con tipos para claves y valores.
+def p_tipo_mapa(p):
+    """
+    tipo : MAPA CORCHETEIZQ tipo COMA tipo CORCHETEDER
+    """
+
+    p[0] = {
+        "tipo": "mapa",
+        "clave": p[3],
+        "valor": p[5]
+    }
+
+
+# Se agrupan las instrucciones delimitadas por llaves.
+def p_bloque(p):
+    """
+    bloque : LLAVEIZQ instrucciones LLAVEDER
+    """
+
+    p[0] = p[2]
+
+
+# Se permite utilizar bloques vacios o con varias instrucciones.
+def p_instrucciones(p):
+    """
+    instrucciones : instrucciones instruccion
+                  | vacio
+    """
+
+    p[0] = p[1] + [p[2]] if len(p) == 3 else []
+
+
+# Se representa una produccion vacia.
+def p_vacio(p):
+    """
+    vacio :
+    """
+
+    p[0] = []
+
+
+# Se reconocen variables normales, constantes y variables observables.
+def p_declaracion(p):
+    """
+    declaracion : declarador IDENTIFICADOR anotacion_opt inicializacion_opt
+    """
+
+    p[0] = {
+        "tipo": "variable",
+        "nombre": p[2],
+        "dato": p[3],
+        "valor": p[4],
+        "clase": p[1]
+    }
+
+
+# Se identifica la clase de declaracion.
+def p_declarador(p):
+    """
+    declarador : VAR
+               | FIJO
+               | ESTADO
+    """
+
+    p[0] = p[1]
+
+
+# Se reconoce la declaracion opcional de un tipo.
+def p_anotacion_opt(p):
+    """
+    anotacion_opt : DOSPUNTOS tipo
+                  | vacio
+    """
+
+    p[0] = p[2] if len(p) == 3 else None
+
+
+# Se reconoce la inicializacion opcional de una variable.
+def p_inicializacion_opt(p):
+    """
+    inicializacion_opt : ASIGNAR expresion
+                       | vacio
+    """
+
+    p[0] = p[2] if len(p) == 3 else None
+
+
+# Se permiten asignaciones simples y actualizaciones de valores.
+def p_asignacion(p):
+    """
+    asignacion : asignable operador_asignacion expresion
+    """
+
+    objetivo = p[1]
+
+    p[0] = {
+        "tipo": "asignacion",
+        "nombre": (
+            objetivo.get("nombre")
+            if objetivo["tipo"] == "identificador"
+            else None
+        ),
+        "objetivo": objetivo,
+        "operador": p[2],
+        "valor": p[3]
+    }
+
+
+# Se reconocen los operadores de asignacion.
+def p_operador_asignacion(p):
+    """
+    operador_asignacion : ASIGNAR
+                        | MASIGUAL
+                        | MENOSIGUAL
+                        | PORIGUAL
+                        | DIVIGUAL
+    """
+
+    p[0] = p[1]
+
+
+# Se reconocen las variables y la referencia al objeto actual.
+def p_asignable_identificador(p):
+    """
+    asignable : IDENTIFICADOR
+              | ESTE
+    """
+
+    if p.slice[1].type == "IDENTIFICADOR":
 
         p[0] = {
             "tipo": "identificador",
             "nombre": p[1]
         }
 
-    # NUMEROS Y VALORES LOGICOS
     else:
 
-        p[0] = p[1]
+        p[0] = {
+            "tipo": "este"
+        }
 
 
-
-# ==========================================
-# 11. OPERACIONES MATEMATICAS
-# ==========================================
-
-def p_valor_operacion(p):
+# Se reconoce el acceso a elementos por indice.
+def p_asignable_indice(p):
     """
-    valor : valor SUMA valor
-          | valor RESTA valor
-          | valor MULTIPLICACION valor
-          | valor DIVISION valor
+    asignable : asignable CORCHETEIZQ expresion CORCHETEDER
     """
 
     p[0] = {
-        "tipo": "operacion",
-        "operador": p[2],
-        "izquierda": p[1],
-        "derecha": p[3]
+        "tipo": "indice",
+        "objeto": p[1],
+        "indice": p[3]
     }
 
 
-# ==========================================
-# 12. COMPARACIONES
-# ==========================================
-
-def p_valor_comparacion(p):
+# Se reconoce el acceso a atributos de un objeto.
+def p_asignable_atributo(p):
     """
-    valor : valor IGUAL valor
-          | valor DIFERENTE valor
-          | valor MAYOR valor
-          | valor MENOR valor
-          | valor MAYORIGUAL valor
-          | valor MENORIGUAL valor
+    asignable : asignable PUNTO IDENTIFICADOR
     """
 
     p[0] = {
-        "tipo": "comparacion",
-        "operador": p[2],
-        "izquierda": p[1],
-        "derecha": p[3]
+        "tipo": "atributo",
+        "objeto": p[1],
+        "nombre": p[3]
     }
 
 
-# ==========================================
-# 13. EXPRESIONES CON PARENTESIS
-# ==========================================
-
-def p_valor_parentesis(p):
+# Se reconocen las llamadas independientes a acciones y metodos.
+# Se permiten llamadas como objeto.metodo(); y modulo.accion();
+# Se conserva la estructura del AST utilizada por el ejecutor.
+def p_instruccion_llamada_independiente(p):
     """
-    valor : PARIZQ valor PARDER
-    """
-
-    p[0] = p[2]
-
-
-# ==========================================
-# 14. INSTRUCCION IMPRIMIR
-# ==========================================
-
-def p_instruccion_imprimir(p):
-    """
-    instruccion : IMPRIMIR PARIZQ valor PARDER PUNTOYCOMA
+    instruccion : asignable PARIZQ argumentos_opt PARDER PUNTOYCOMA
     """
 
-    p[0] = {
-        "tipo": "imprimir",
-        "mensaje": p[3]
-    }
+    destino = p[1]
 
-# ==========================================
-# 15. LLAMADAS A FUNCIONES CON ARGUMENTOS
-# ==========================================
-
-def p_instruccion_llamada(p):
-    """
-    instruccion : IDENTIFICADOR PARIZQ PARDER PUNTOYCOMA
-                | IDENTIFICADOR PARIZQ lista_argumentos PARDER PUNTOYCOMA
-    """
-
-    # LLAMADA SIN ARGUMENTOS
-    if len(p) == 5:
-        argumentos = []
-
-    # LLAMADA CON UNO O VARIOS ARGUMENTOS
+    # Se distingue una accion global de un metodo de objeto.
+    if destino["tipo"] == "identificador":
+        nombre = destino["nombre"]
     else:
-        argumentos = p[3]
+        nombre = None
 
+    # Se construye un nodo compatible con el analizador
+    # semantico, el ejecutor y el generador del AST.
     p[0] = {
         "tipo": "llamada",
-        "nombre": p[1],
-        "argumentos": argumentos
+        "nombre": nombre,
+        "objetivo": destino,
+        "argumentos": p[3]
     }
 
-
-# UN SOLO ARGUMENTO
-def p_lista_argumentos_uno(p):
+# Se reconocen declaraciones, asignaciones y expresiones independientes.
+def p_instruccion_simple(p):
     """
-    lista_argumentos : valor
-    """
-
-    p[0] = [p[1]]
-
-
-# DOS O MAS ARGUMENTOS
-def p_lista_argumentos_varios(p):
-    """
-    lista_argumentos : lista_argumentos COMA valor
+    instruccion : declaracion PUNTOYCOMA
+                | asignacion PUNTOYCOMA
+                | expresion PUNTOYCOMA
     """
 
-    p[0] = p[1] + [p[3]]
+    p[0] = p[1]
 
 
+# Se reconocen las instrucciones de salida y registro de eventos.
+def p_instruccion_salida(p):
+    """
+    instruccion : salida PARIZQ argumentos_opt PARDER PUNTOYCOMA
+    """
 
-# ==========================================
-# 16. CONDICIONES SI Y SINO
-# ==========================================
+    nombre = p[1]
+    argumentos = p[3]
 
+    if nombre == "imprimir":
+
+        p[0] = {
+            "tipo": "imprimir",
+            "mensaje": argumentos[0] if argumentos else "",
+            "argumentos": argumentos
+        }
+
+    else:
+
+        p[0] = {
+            "tipo": nombre,
+            "argumentos": argumentos
+        }
+
+
+# Se identifican las instrucciones de salida disponibles.
+def p_salida(p):
+    """
+    salida : IMPRIMIR
+           | ALERTA
+           | REGISTRAR
+    """
+
+    p[0] = p[1]
+
+
+# Se reconoce la estructura principal de una condicion.
 def p_instruccion_si(p):
     """
-    instruccion : SI PARIZQ valor PARDER LLAVEIZQ instrucciones LLAVEDER opcion_sino
+    instruccion : SI PARIZQ expresion PARDER bloque opcion_sino
     """
 
     p[0] = {
         "tipo": "si",
         "condicion": p[3],
-        "instrucciones_si": p[6],
-        "instrucciones_sino": p[8]
+        "instrucciones_si": p[5],
+        "instrucciones_sino": p[6]
     }
 
 
+# Se reconoce sinosi como una alternativa de la condicion principal.
+# Se conserva la estructura anidada para facilitar la compatibilidad.
+def p_opcion_sino_sinosi(p):
+    """
+    opcion_sino : SINOSI PARIZQ expresion PARDER bloque opcion_sino
+    """
+
+    p[0] = [
+        {
+            "tipo": "si",
+            "variante": "sinosi",
+            "condicion": p[3],
+            "instrucciones_si": p[5],
+            "instrucciones_sino": p[6]
+        }
+    ]
+
+
+# Se reconocen las instrucciones del bloque sino.
 def p_opcion_sino(p):
     """
-    opcion_sino : SINO LLAVEIZQ instrucciones LLAVEDER
+    opcion_sino : SINO bloque
     """
 
-    p[0] = p[3]
+    p[0] = p[2]
 
 
-def p_opcion_sino_vacio(p):
+# Se permite omitir el bloque sino.
+def p_opcion_sino_vacia(p):
     """
-    opcion_sino :
+    opcion_sino : vacio
     """
 
     p[0] = []
 
 
-# ==========================================
-# 17. CICLO REPETIR
-# ==========================================
+# Se reconoce la seleccion entre varios casos.
+def p_instruccion_segun(p):
+    """
+    instruccion : SEGUN PARIZQ expresion PARDER LLAVEIZQ casos otro_caso_opt LLAVEDER
+    """
 
+    p[0] = {
+        "tipo": "segun",
+        "valor": p[3],
+        "casos": p[6],
+        "otro_caso": p[7]
+    }
+
+
+# Se agrupan los casos de una seleccion.
+def p_casos(p):
+    """
+    casos : casos caso
+          | vacio
+    """
+
+    p[0] = p[1] + [p[2]] if len(p) == 3 else []
+
+
+# Se reconoce un caso y su bloque de instrucciones.
+def p_caso(p):
+    """
+    caso : CASO expresion DOSPUNTOS bloque
+    """
+
+    p[0] = {
+        "valor": p[2],
+        "instrucciones": p[4]
+    }
+
+
+# Se reconoce la alternativa utilizada cuando ningun caso coincide.
+def p_otro_caso_opt(p):
+    """
+    otro_caso_opt : OTRO_CASO DOSPUNTOS bloque
+                  | vacio
+    """
+
+    p[0] = p[3] if len(p) == 4 else []
+
+
+# Se reconoce la repeticion de un bloque un numero determinado de veces.
 def p_instruccion_repetir(p):
     """
-    instruccion : REPETIR PARIZQ valor PARDER LLAVEIZQ instrucciones LLAVEDER
+    instruccion : REPETIR PARIZQ expresion PARDER bloque
     """
 
     p[0] = {
         "tipo": "repetir",
         "cantidad": p[3],
-        "instrucciones": p[6]
+        "instrucciones": p[5]
     }
 
 
-# ==========================================
-# 18. CICLO MIENTRAS
-# ==========================================
-
+# Se reconoce el ciclo que depende de una condicion.
 def p_instruccion_mientras(p):
     """
-    instruccion : MIENTRAS PARIZQ valor PARDER LLAVEIZQ instrucciones LLAVEDER
+    instruccion : MIENTRAS PARIZQ expresion PARDER bloque
     """
 
     p[0] = {
         "tipo": "mientras",
         "condicion": p[3],
-        "instrucciones": p[6]
+        "instrucciones": p[5]
     }
 
 
-# ==========================================
-# 19. ERRORES SINTACTICOS
-# ==========================================
+# Se reconoce un ciclo para con declaracion inicial.
+def p_instruccion_para_var(p):
+    """
+    instruccion : PARA PARIZQ VAR IDENTIFICADOR cola_var_para PARDER bloque
+    """
 
+    cabecera = p[5]
+
+    if cabecera["tipo"] == "para_en":
+
+        p[0] = {
+            "tipo": "para_en",
+            "iterador": {
+                "nombre": p[4],
+                "declarar": True
+            },
+            "coleccion": cabecera["coleccion"],
+            "instrucciones": p[7]
+        }
+
+    else:
+
+        inicio = {
+            "tipo": "variable",
+            "clase": "var",
+            "nombre": p[4],
+            "dato": cabecera["dato"],
+            "valor": cabecera["valor"]
+        }
+
+        p[0] = {
+            "tipo": "para",
+            "inicio": inicio,
+            "condicion": cabecera["condicion"],
+            "cambio": cabecera["cambio"],
+            "instrucciones": p[7]
+        }
+
+
+# Se reconoce el recorrido de colecciones con una variable nueva.
+def p_cola_var_para_iterador(p):
+    """
+    cola_var_para : EN expresion
+    """
+
+    p[0] = {
+        "tipo": "para_en",
+        "coleccion": p[2]
+    }
+
+
+# Se reconoce la inicializacion de un contador.
+def p_cola_var_para_contador(p):
+    """
+    cola_var_para : anotacion_opt inicializacion_opt PUNTOYCOMA expresion PUNTOYCOMA parte_para
+    """
+
+    p[0] = {
+        "tipo": "para",
+        "dato": p[1],
+        "valor": p[2],
+        "condicion": p[4],
+        "cambio": p[6]
+    }
+
+
+# Se reconocen ciclos para que utilizan una variable existente.
+def p_instruccion_para_id(p):
+    """
+    instruccion : PARA PARIZQ IDENTIFICADOR cola_id_para PARDER bloque
+    """
+
+    cabecera = p[4]
+
+    if cabecera["tipo"] == "para_en":
+
+        p[0] = {
+            "tipo": "para_en",
+            "iterador": {
+                "nombre": p[3],
+                "declarar": False
+            },
+            "coleccion": cabecera["coleccion"],
+            "instrucciones": p[6]
+        }
+
+    else:
+
+        inicio = {
+            "tipo": "asignacion",
+            "nombre": p[3],
+            "objetivo": {
+                "tipo": "identificador",
+                "nombre": p[3]
+            },
+            "operador": cabecera["operador"],
+            "valor": cabecera["valor"]
+        }
+
+        p[0] = {
+            "tipo": "para",
+            "inicio": inicio,
+            "condicion": cabecera["condicion"],
+            "cambio": cabecera["cambio"],
+            "instrucciones": p[6]
+        }
+
+
+# Se reconoce el recorrido de una coleccion existente.
+def p_cola_id_para_iterador(p):
+    """
+    cola_id_para : EN expresion
+    """
+
+    p[0] = {
+        "tipo": "para_en",
+        "coleccion": p[2]
+    }
+
+
+# Se reconocen las asignaciones iniciales de un ciclo con contador.
+def p_cola_id_para_contador(p):
+    """
+    cola_id_para : operador_asignacion expresion PUNTOYCOMA expresion PUNTOYCOMA parte_para
+    """
+
+    p[0] = {
+        "tipo": "para",
+        "operador": p[1],
+        "valor": p[2],
+        "condicion": p[4],
+        "cambio": p[6]
+    }
+
+
+# Se permite utilizar un ciclo para sin inicializacion.
+def p_instruccion_para_vacio(p):
+    """
+    instruccion : PARA PARIZQ PUNTOYCOMA expresion PUNTOYCOMA parte_para PARDER bloque
+    """
+
+    p[0] = {
+        "tipo": "para",
+        "inicio": None,
+        "condicion": p[4],
+        "cambio": p[6],
+        "instrucciones": p[8]
+    }
+
+
+# Se reconoce el cambio que se realiza al terminar cada iteracion.
+def p_parte_para(p):
+    """
+    parte_para : asignacion
+               | vacio
+    """
+
+    p[0] = p[1] if p[1] != [] else None
+
+
+# Se reconocen las instrucciones para controlar los ciclos.
+def p_instruccion_salto(p):
+    """
+    instruccion : DETENER PUNTOYCOMA
+                | SEGUIR PUNTOYCOMA
+    """
+
+    p[0] = {
+        "tipo": p[1]
+    }
+
+
+# Se reconoce la instruccion que devuelve un resultado.
+def p_instruccion_devolver(p):
+    """
+    instruccion : DEVOLVER valor_opt PUNTOYCOMA
+    """
+
+    p[0] = {
+        "tipo": "devolver",
+        "valor": p[2]
+    }
+
+
+# Se reconoce un valor opcional.
+def p_valor_opt(p):
+    """
+    valor_opt : expresion
+              | vacio
+    """
+
+    p[0] = p[1] if p[1] != [] else None
+
+
+# Se reconoce la ejecucion de una mision secundaria.
+def p_instruccion_ejecutar(p):
+    """
+    instruccion : EJECUTAR IDENTIFICADOR PUNTOYCOMA
+    """
+
+    p[0] = {
+        "tipo": "ejecutar",
+        "nombre": p[2]
+    }
+
+
+# Se reconocen los bloques utilizados para manejar errores.
+def p_instruccion_proteger(p):
+    """
+    instruccion : PROTEGER bloque atrapar_opt finalmente_opt
+    """
+
+    p[0] = {
+        "tipo": "proteger",
+        "instrucciones": p[2],
+        "atrapar": p[3],
+        "finalmente": p[4]
+    }
+
+
+# Se reconoce un bloque de captura de errores.
+def p_atrapar_opt(p):
+    """
+    atrapar_opt : ATRAPAR PARIZQ IDENTIFICADOR PARDER bloque
+                | vacio
+    """
+
+    if len(p) == 6:
+
+        p[0] = {
+            "nombre": p[3],
+            "instrucciones": p[5]
+        }
+
+    else:
+
+        p[0] = None
+
+
+# Se reconoce el bloque que se ejecuta al finalizar la proteccion.
+def p_finalmente_opt(p):
+    """
+    finalmente_opt : FINALMENTE bloque
+                   | vacio
+    """
+
+    p[0] = p[2] if len(p) == 3 else []
+
+
+# Se reconoce la instruccion que genera un error controlado.
+def p_instruccion_lanzar(p):
+    """
+    instruccion : LANZAR expresion PUNTOYCOMA
+    """
+
+    p[0] = {
+        "tipo": "lanzar",
+        "valor": p[2]
+    }
+
+
+# Se reconoce una vigilancia reactiva sobre una condicion.
+def p_vigilancia(p):
+    """
+    vigilancia : VIGILAR PARIZQ expresion PARDER bloque
+    """
+
+    p[0] = {
+        "tipo": "vigilar",
+        "condicion": p[3],
+        "instrucciones": p[5]
+    }
+
+
+# Se permite utilizar vigilancia dentro de las instrucciones.
+def p_instruccion_vigilar(p):
+    """
+    instruccion : vigilancia
+    """
+
+    p[0] = p[1]
+
+
+# Se reconoce una clase y su posible herencia.
+def p_clase(p):
+    """
+    clase : CLASE IDENTIFICADOR herencia_opt LLAVEIZQ miembros LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "clase",
+        "nombre": p[2],
+        "hereda": p[3],
+        "miembros": p[5]
+    }
+
+
+# Se reconoce la clase de la que se heredan atributos y acciones.
+def p_herencia_opt(p):
+    """
+    herencia_opt : HEREDA IDENTIFICADOR
+                 | vacio
+    """
+
+    p[0] = p[2] if len(p) == 3 else None
+
+
+# Se agrupan los miembros declarados dentro de una clase.
+def p_miembros(p):
+    """
+    miembros : miembros miembro
+             | vacio
+    """
+
+    p[0] = p[1] + [p[2]] if len(p) == 3 else []
+
+
+# Se reconocen los atributos y las acciones de una clase.
+def p_miembro(p):
+    """
+    miembro : declaracion PUNTOYCOMA
+            | accion
+            | visibilidad declaracion PUNTOYCOMA
+            | visibilidad accion
+    """
+
+    if p.slice[1].type == "visibilidad":
+
+        elemento = p[2]
+        elemento["visibilidad"] = p[1]
+
+    else:
+
+        elemento = p[1]
+
+    p[0] = elemento
+
+
+# Se reconoce la visibilidad de los miembros de una clase.
+def p_visibilidad(p):
+    """
+    visibilidad : PUBLICO
+                | PRIVADO
+    """
+
+    p[0] = p[1]
+
+
+# Se reconoce la declaracion de una estructura.
+def p_estructura(p):
+    """
+    estructura : ESTRUCTURA IDENTIFICADOR LLAVEIZQ campos LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "estructura",
+        "nombre": p[2],
+        "campos": p[4]
+    }
+
+
+# Se agrupan los campos que pertenecen a una estructura.
+def p_campos(p):
+    """
+    campos : campos campo
+           | vacio
+    """
+
+    p[0] = p[1] + [p[2]] if len(p) == 3 else []
+
+
+# Se reconoce el nombre y tipo de cada campo.
+def p_campo(p):
+    """
+    campo : IDENTIFICADOR DOSPUNTOS tipo PUNTOYCOMA
+    """
+
+    p[0] = {
+        "nombre": p[1],
+        "tipo": p[3]
+    }
+
+
+# Se reconoce una enumeracion.
+def p_enumeracion(p):
+    """
+    enumeracion : ENUMERACION IDENTIFICADOR LLAVEIZQ nombres_opt LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "enumeracion",
+        "nombre": p[2],
+        "valores": p[4]
+    }
+
+
+# Se permite declarar una enumeracion vacia.
+def p_nombres_opt(p):
+    """
+    nombres_opt : nombres
+                | vacio
+    """
+
+    p[0] = p[1]
+
+
+# Se agrupan los nombres de una enumeracion.
+def p_nombres(p):
+    """
+    nombres : nombres COMA IDENTIFICADOR
+            | IDENTIFICADOR
+    """
+
+    p[0] = p[1] + [p[3]] if len(p) == 4 else [p[1]]
+
+
+# Se reconoce la definicion de un modulo.
+def p_modulo(p):
+    """
+    modulo : MODULO IDENTIFICADOR LLAVEIZQ elementos LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "modulo",
+        "nombre": p[2],
+        "elementos": p[4]
+    }
+
+
+# Se reconoce la importacion de un modulo.
+def p_importar(p):
+    """
+    importar : USAR ruta PUNTOYCOMA
+    """
+
+    p[0] = {
+        "tipo": "usar",
+        "ruta": p[2]
+    }
+
+
+# Se reconoce una ruta formada por nombres separados por puntos.
+def p_ruta(p):
+    """
+    ruta : ruta PUNTO IDENTIFICADOR
+         | IDENTIFICADOR
+    """
+
+    p[0] = (
+        p[1] + "." + p[3]
+        if len(p) == 4
+        else p[1]
+    )
+
+
+# Se reconocen operaciones matematicas, comparaciones y operadores logicos.
+def p_expresion_binaria(p):
+    """
+    expresion : expresion SUMA expresion
+              | expresion RESTA expresion
+              | expresion MULTIPLICACION expresion
+              | expresion DIVISION expresion
+              | expresion DIV_ENTERA expresion
+              | expresion RESIDUO expresion
+              | expresion POTENCIA expresion
+              | expresion IGUAL expresion
+              | expresion DIFERENTE expresion
+              | expresion MAYOR expresion
+              | expresion MENOR expresion
+              | expresion MAYORIGUAL expresion
+              | expresion MENORIGUAL expresion
+              | expresion Y expresion
+              | expresion O expresion
+    """
+
+    operador = p[2]
+    token = p.slice[2].type
+
+    if token in ("Y", "O"):
+
+        tipo = "logica"
+
+    elif token in (
+        "IGUAL",
+        "DIFERENTE",
+        "MAYOR",
+        "MENOR",
+        "MAYORIGUAL",
+        "MENORIGUAL"
+    ):
+
+        tipo = "comparacion"
+
+    else:
+
+        tipo = "operacion"
+
+    p[0] = {
+        "tipo": tipo,
+        "operador": operador,
+        "izquierda": p[1],
+        "derecha": p[3]
+    }
+
+
+# Se reconocen los operadores de un solo operando.
+def p_expresion_unaria(p):
+    """
+    expresion : NEGAR expresion
+              | RESTA expresion %prec UMENOS
+              | SUMA expresion %prec UMAS
+    """
+
+    p[0] = {
+        "tipo": "unario",
+        "operador": p[1],
+        "valor": p[2]
+    }
+
+
+# Se permite agrupar expresiones mediante parentesis.
+def p_expresion_parentesis(p):
+    """
+    expresion : PARIZQ expresion PARDER
+    """
+
+    p[0] = p[2]
+
+
+# Se reconocen los valores literales y los identificadores.
+# Las cadenas y los caracteres se representan por separado.
+def p_expresion_literal(p):
+    """
+    expresion : NUMERO
+              | SI_PASO
+              | NO_PASO
+              | CADENA
+              | CARACTER
+              | NADA
+              | IDENTIFICADOR
+              | ESTE
+    """
+
+    tipo = p.slice[1].type
+
+    if tipo == "IDENTIFICADOR":
+
+        p[0] = {
+            "tipo": "identificador",
+            "nombre": p[1]
+        }
+
+    elif tipo == "ESTE":
+
+        p[0] = {
+            "tipo": "este"
+        }
+
+    elif tipo in ("CADENA", "CARACTER"):
+
+        try:
+
+            texto = python_ast.literal_eval(p[1])
+
+        except (SyntaxError, ValueError):
+
+            raise SyntaxError(
+                f"Literal invalido en linea {p.lineno(1)}"
+            )
+
+        p[0] = {
+            "tipo": (
+                "cadena"
+                if tipo == "CADENA"
+                else "caracter"
+            ),
+            "valor": texto
+        }
+
+    elif tipo == "NADA":
+
+        p[0] = {
+            "tipo": "nada",
+            "valor": None
+        }
+
+    else:
+
+        p[0] = p[1]
+
+
+# Se reconoce la creacion de una lista.
+def p_expresion_lista(p):
+    """
+    expresion : CORCHETEIZQ argumentos_opt CORCHETEDER
+    """
+
+    p[0] = {
+        "tipo": "lista",
+        "elementos": p[2]
+    }
+
+
+# Se reconoce la creacion de un mapa.
+def p_expresion_mapa(p):
+    """
+    expresion : LLAVEIZQ pares_opt LLAVEDER
+    """
+
+    p[0] = {
+        "tipo": "mapa",
+        "pares": p[2]
+    }
+
+
+# Se permite crear un mapa sin elementos.
+def p_pares_opt(p):
+    """
+    pares_opt : pares
+              | vacio
+    """
+
+    p[0] = p[1]
+
+
+# Se agrupan los pares de clave y valor de un mapa.
+def p_pares(p):
+    """
+    pares : pares COMA par
+          | par
+    """
+
+    p[0] = p[1] + [p[3]] if len(p) == 4 else [p[1]]
+
+
+# Se reconoce un par formado por clave y valor.
+def p_par(p):
+    """
+    par : expresion DOSPUNTOS expresion
+    """
+
+    p[0] = {
+        "clave": p[1],
+        "valor": p[3]
+    }
+
+
+# Se reconoce el acceso a un elemento mediante un indice.
+def p_expresion_indice(p):
+    """
+    expresion : expresion CORCHETEIZQ expresion CORCHETEDER
+    """
+
+    p[0] = {
+        "tipo": "indice",
+        "objeto": p[1],
+        "indice": p[3]
+    }
+
+
+# Se reconoce la consulta de un atributo de un objeto.
+def p_expresion_atributo(p):
+    """
+    expresion : expresion PUNTO IDENTIFICADOR
+    """
+
+    p[0] = {
+        "tipo": "atributo",
+        "objeto": p[1],
+        "nombre": p[3]
+    }
+
+
+# Se reconocen las llamadas a acciones y funciones.
+def p_expresion_llamada(p):
+    """
+    expresion : expresion PARIZQ argumentos_opt PARDER
+    """
+
+    destino = p[1]
+
+    if (
+        isinstance(destino, dict)
+        and destino.get("tipo") == "identificador"
+    ):
+
+        nombre = destino.get("nombre")
+
+    else:
+
+        nombre = None
+
+    p[0] = {
+        "tipo": "llamada",
+        "nombre": nombre,
+        "objetivo": destino,
+        "argumentos": p[3]
+    }
+
+
+# Se reconocen las funciones especiales preguntar y checar.
+def p_expresion_intrinseca(p):
+    """
+    expresion : intrinseca PARIZQ argumentos_opt PARDER
+    """
+
+    p[0] = {
+        "tipo": "llamada",
+        "nombre": p[1],
+        "argumentos": p[3],
+        "integrada": True
+    }
+
+
+# Se agrupan las funciones especiales disponibles como palabras reservadas.
+def p_intrinseca(p):
+    """
+    intrinseca : PREGUNTAR
+               | CHECAR
+    """
+
+    p[0] = p[1]
+
+
+# Se reconoce la creacion de una instancia de una clase.
+def p_expresion_crear(p):
+    """
+    expresion : CREAR IDENTIFICADOR PARIZQ argumentos_opt PARDER
+    """
+
+    p[0] = {
+        "tipo": "crear",
+        "clase": p[2],
+        "argumentos": p[4]
+    }
+
+
+# Se permiten llamadas con y sin argumentos.
+def p_argumentos_opt(p):
+    """
+    argumentos_opt : argumentos
+                   | vacio
+    """
+
+    p[0] = p[1]
+
+
+# Se agrupan los argumentos de una llamada.
+def p_argumentos(p):
+    """
+    argumentos : argumentos COMA expresion
+               | expresion
+    """
+
+    p[0] = p[1] + [p[3]] if len(p) == 4 else [p[1]]
+
+
+# Se comunica la ubicacion del primer error sintactico encontrado.
 def p_error(p):
 
-    if p:
+    if p is not None:
+
         raise SyntaxError(
             f"Error sintactico en linea {p.lineno}: "
-            f"token inesperado '{p.value}'"
+            f"token inesperado '{p.value}' ({p.type})"
         )
 
     raise SyntaxError(
@@ -472,32 +1371,31 @@ def p_error(p):
     )
 
 
-# ==========================================
-# 20. CREAR ANALIZADOR SINTACTICO
-# ==========================================
-
+# Se construye el analizador sintactico mediante PLY.
+# Se conserva el nombre parser para mantener las importaciones existentes.
 parser = yacc.yacc(
     start="programa",
     debug=False,
     write_tables=False
 )
 
-# ==========================================
-# 21. MOSTRAR EXPRESIONES
-# ==========================================
 
+# Se genera una representacion legible de una expresion.
 def mostrar_valor(valor):
 
     if isinstance(valor, dict):
 
         tipo = valor.get("tipo")
 
-        # MOSTRAR IDENTIFICADORES
         if tipo == "identificador":
+
             return valor["nombre"]
 
-        # MOSTRAR OPERACIONES Y COMPARACIONES
-        if tipo in ("operacion", "comparacion"):
+        if tipo in ("cadena", "caracter"):
+
+            return repr(valor["valor"])
+
+        if tipo in ("operacion", "comparacion", "logica"):
 
             izquierda = mostrar_valor(
                 valor["izquierda"]
@@ -513,111 +1411,142 @@ def mostrar_valor(valor):
                 f"{derecha})"
             )
 
+        if tipo == "unario":
+
+            return (
+                f"({valor['operador']} "
+                f"{mostrar_valor(valor['valor'])})"
+            )
+
+        if tipo == "llamada":
+
+            argumentos = ", ".join(
+                mostrar_valor(argumento)
+                for argumento in valor["argumentos"]
+            )
+
+            return (
+                f"{valor.get('nombre') or 'llamada'}"
+                f"({argumentos})"
+            )
+
+        if tipo == "lista":
+
+            elementos = ", ".join(
+                mostrar_valor(elemento)
+                for elemento in valor["elementos"]
+            )
+
+            return f"[{elementos}]"
+
+        if tipo == "mapa":
+
+            pares = ", ".join(
+                f"{mostrar_valor(par['clave'])}: "
+                f"{mostrar_valor(par['valor'])}"
+                for par in valor["pares"]
+            )
+
+            return "{" + pares + "}"
+
+        return str(valor)
+
     return str(valor)
 
 
-# ==========================================
-# 22. MOSTRAR INSTRUCCIONES
-# ==========================================
-
+# Se recorren y muestran las instrucciones del AST.
 def mostrar_instruccion(instruccion, nivel=0):
 
     espacio = "    " * nivel
     tipo = instruccion["tipo"]
 
-    # VARIABLES
     if tipo == "variable":
 
         print(
-            f"{espacio}Variable: {instruccion['nombre']} | "
-            f"Tipo: {instruccion['dato']} | "
-            f"Valor: {mostrar_valor(instruccion['valor'])}"
+            f"{espacio}{instruccion['clase']} "
+            f"{instruccion['nombre']}: "
+            f"{instruccion['dato']} = "
+            f"{mostrar_valor(instruccion['valor'])}"
         )
 
-    # ACTUALIZACION DE VARIABLES
     elif tipo == "asignacion":
 
+        objetivo = (
+            instruccion.get("nombre")
+            or mostrar_valor(instruccion["objetivo"])
+        )
+
         print(
-            f"{espacio}Actualizar: "
-            f"{instruccion['nombre']} "
+            f"{espacio}Asignacion: "
+            f"{objetivo} "
             f"{instruccion['operador']} "
             f"{mostrar_valor(instruccion['valor'])}"
         )
 
-    # IMPRIMIR
     elif tipo == "imprimir":
 
-        print(
-            f"{espacio}Imprimir: "
-            f"{mostrar_valor(instruccion['mensaje'])}"
-        )
-
-    # LLAMADAS A FUNCIONES
-    elif tipo == "llamada":
-
-        nombre = instruccion["nombre"]
-
-        argumentos = instruccion.get(
-            "argumentos", []
-        )
-
-        argumentos_texto = ", ".join(
-            mostrar_valor(arg)
-            for arg in argumentos
+        argumentos = ", ".join(
+            mostrar_valor(argumento)
+            for argumento in instruccion["argumentos"]
         )
 
         print(
-            f"{espacio}Llamar accion: "
-            f"{nombre}({argumentos_texto})"
+            f"{espacio}Imprimir: {argumentos}"
         )
 
-    # CONDICIONES
     elif tipo == "si":
 
         print(
-            f"{espacio}Condicion SI: "
-            f"{mostrar_valor(instruccion['condicion'])}"
+            f"{espacio}SI "
+            f"({mostrar_valor(instruccion['condicion'])})"
         )
 
-        print(f"{espacio}Bloque SI:")
+        for elemento in instruccion["instrucciones_si"]:
 
-        for item in instruccion["instrucciones_si"]:
-            mostrar_instruccion(item, nivel + 1)
+            mostrar_instruccion(
+                elemento,
+                nivel + 1
+            )
 
         if instruccion["instrucciones_sino"]:
 
-            print(f"{espacio}Bloque SINO:")
+            print(f"{espacio}SINO:")
 
-            for item in instruccion["instrucciones_sino"]:
-                mostrar_instruccion(item, nivel + 1)
+            for elemento in instruccion["instrucciones_sino"]:
 
-    # CICLO REPETIR
-    elif tipo == "repetir":
+                mostrar_instruccion(
+                    elemento,
+                    nivel + 1
+                )
 
-        print(
-            f"{espacio}Ciclo REPETIR: "
-            f"{mostrar_valor(instruccion['cantidad'])} veces"
-        )
-
-        for item in instruccion["instrucciones"]:
-            mostrar_instruccion(item, nivel + 1)
-
-    # CICLO MIENTRAS
-    elif tipo == "mientras":
+    elif tipo in (
+        "mientras",
+        "repetir",
+        "vigilar",
+        "para",
+        "para_en"
+    ):
 
         print(
-            f"{espacio}Ciclo MIENTRAS: "
-            f"{mostrar_valor(instruccion['condicion'])}"
+            f"{espacio}{tipo.upper()}"
         )
 
-        for item in instruccion["instrucciones"]:
-            mostrar_instruccion(item, nivel + 1)
+        for elemento in instruccion["instrucciones"]:
+
+            mostrar_instruccion(
+                elemento,
+                nivel + 1
+            )
+
+    else:
+
+        print(
+            f"{espacio}{tipo}: {instruccion}"
+        )
 
 
-# ==========================================
-# 23. CODIGO DE PRUEBA DE JARVIS
-# ==========================================
-
+# Se conserva el programa de ejemplo original de JARVIS.
+# Se utiliza para comprobar las reglas y mostrar codigo al abrir el editor.
 codigo = '''
 sistema StarkLab {
 
@@ -638,7 +1567,6 @@ sistema StarkLab {
         imprimir(energia);
     }
 
-   
     mision principal {
 
         var heroe: cadenita = "Iron Man";
@@ -658,7 +1586,6 @@ sistema StarkLab {
         activarArmadura();
         usarPropulsor(25);
         presentarHeroe(heroe, energia);
-
 
         imprimir("resultado:");
         imprimir(resultado);
@@ -690,59 +1617,51 @@ sistema StarkLab {
 '''
 
 
-# ==========================================
-# 24. EJECUTAR ANALISIS SINTACTICO
-# ==========================================
-
+# Se permite ejecutar el analizador directamente para comprobar la sintaxis.
 if __name__ == "__main__":
 
     lexer.lineno = 1
 
     try:
 
-        resultado = parser.parse(
+        # Se construye el AST del programa de ejemplo.
+        arbol = parser.parse(
             codigo,
             lexer=lexer
         )
 
-        if resultado is None:
-            raise SyntaxError(
-                "No se pudo construir el AST"
-            )
-
         print("========== JARVIS ==========")
         print("Analisis sintactico correcto")
-        print("Sistema:", resultado["nombre"])
-        print("Mision:", resultado["mision"]["nombre"])
+        print("Sistema:", arbol["nombre"])
+        print("Mision:", arbol["mision"]["nombre"])
 
-        # MOSTRAR FUNCIONES DECLARADAS
-        print("\nAcciones encontradas:")
-
-        for accion in resultado["acciones"]:
-
-            parametros = accion.get(
-                "parametros", []
-            )
-
-            texto_parametros = ", ".join(
-                f"{p['nombre']}: {p['tipo']}"
-                for p in parametros
-            )
+        # Se muestran las acciones declaradas.
+        for accion in arbol["acciones"]:
 
             print(
-                f"Accion: {accion['nombre']}"
-                f"({texto_parametros})"
+                "Accion:",
+                accion["nombre"]
             )
 
             for instruccion in accion["instrucciones"]:
-                mostrar_instruccion(instruccion, 1)
 
-        print("\nInstrucciones encontradas:")
+                mostrar_instruccion(
+                    instruccion,
+                    1
+                )
 
-        for instruccion in resultado["mision"]["instrucciones"]:
-            mostrar_instruccion(instruccion)
+        # Se muestran las instrucciones de la mision principal.
+        print("\nInstrucciones de la mision principal:")
+
+        for instruccion in arbol["mision"]["instrucciones"]:
+
+            mostrar_instruccion(
+                instruccion,
+                1
+            )
 
     except SyntaxError as error:
 
         print("========== ERROR JARVIS ==========")
         print(error)
+
