@@ -1,0 +1,302 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ui version="4.0">
+  <class>VentanaProblemas</class>
+  <widget class="QDialog" name="VentanaProblemas">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>980</width>
+        <height>660</height>
+      </rect>
+    </property>
+    <property name="minimumSize">
+      <size>
+        <width>680</width>
+        <height>460</height>
+      </size>
+    </property>
+    <property name="windowTitle">
+      <string notr="true">J.A.R.V.I.S | Problemas del programa</string>
+    </property>
+    <property name="styleSheet">
+      <string notr="true">QDialog {background:#0B1C34;color:#EAF4FF;font-family:'Segoe UI';}
+QFrame#headerDialog {background:#051625;border-bottom:2px solid #267FC4;}
+QLabel#lblDialogTitle {color:#FFFFFF;font-size:19px;font-weight:800;}
+QLabel#lblDialogSubtitulo {color:#B8D7EF;font-size:12px;}
+QLabel {color:#EAF4FF;font-size:12px;}
+QLabel#lblEstadoProblemas {color:#9EB8D4;font-size:15px;font-weight:700;}
+QLabel#lblASTAviso, QLabel#lblNombreAST {color:#9EB8D4;font-size:11px;}
+QFrame#barraDialog, QFrame#panelDialog {background:#122845;border:1px solid #2B496A;border-radius:9px;}
+QPushButton {background:#173B61;color:#EFF8FF;border:1px solid #2B496A;border-radius:7px;padding:9px 11px;font-weight:600;min-height:20px;}
+QPushButton:hover {background:#23517D;}
+QPushButton#btnCerrarAST,QPushButton#btnCerrarProblemas {background:#1677BD;color:white;border-color:#1677BD;}
+QScrollArea {background:white;border:1px solid #2B496A;border-radius:7px;}
+QTableWidget {background:#122845;color:#EAF4FF;alternate-background-color:#091B31;gridline-color:#2B496A;border:1px solid #2B496A;}
+QHeaderView::section {background:#091B31;color:#EAF4FF;padding:8px;border:0;border-right:1px solid #2B496A;font-weight:700;}
+QPlainTextEdit {background:#0D203A;color:#EAF4FF;border:1px solid #2B496A;border-radius:8px;padding:10px;font-family:Consolas;font-size:12px;}
+QLabel#lblASTImagen {background:#FFFFFF;color:#6A849C;}</string>
+    </property>
+    <layout class="QVBoxLayout" name="layoutVentana">
+      <property name="spacing">
+        <number>10</number>
+      </property>
+      <property name="leftMargin">
+        <number>0</number>
+      </property>
+      <property name="topMargin">
+        <number>0</number>
+      </property>
+      <property name="rightMargin">
+        <number>0</number>
+      </property>
+      <property name="bottomMargin">
+        <number>0</number>
+      </property>
+      <item>
+        <widget class="QFrame" name="headerDialog">
+          <layout class="QHBoxLayout" name="cabeceraLayout">
+            <property name="spacing">
+              <number>10</number>
+            </property>
+            <property name="leftMargin">
+              <number>23</number>
+            </property>
+            <property name="topMargin">
+              <number>13</number>
+            </property>
+            <property name="rightMargin">
+              <number>23</number>
+            </property>
+            <property name="bottomMargin">
+              <number>13</number>
+            </property>
+            <item>
+              <widget class="QLabel" name="lblDialogTitle">
+                <property name="text">
+                  <string notr="true">J.A.R.V.I.S    /    PROBLEMAS DE ANÁLISIS</string>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </widget>
+      </item>
+      <item>
+        <widget class="QWidget" name="contenidoDialog">
+          <layout class="QVBoxLayout" name="contenidoLayout">
+            <property name="spacing">
+              <number>11</number>
+            </property>
+            <property name="leftMargin">
+              <number>18</number>
+            </property>
+            <property name="topMargin">
+              <number>10</number>
+            </property>
+            <property name="rightMargin">
+              <number>18</number>
+            </property>
+            <property name="bottomMargin">
+              <number>15</number>
+            </property>
+            <item>
+              <widget class="QFrame" name="barraDialog">
+                <layout class="QHBoxLayout" name="erroresEstadoLayout">
+                  <property name="spacing">
+                    <number>10</number>
+                  </property>
+                  <property name="leftMargin">
+                    <number>16</number>
+                  </property>
+                  <property name="topMargin">
+                    <number>11</number>
+                  </property>
+                  <property name="rightMargin">
+                    <number>16</number>
+                  </property>
+                  <property name="bottomMargin">
+                    <number>11</number>
+                  </property>
+                  <item>
+                    <widget class="QLabel" name="lblEstadoProblemas">
+                      <property name="text">
+                        <string notr="true">○  Sin analizar</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <spacer name="spacer">
+                      <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeType">
+                        <enum>QSizePolicy::Expanding</enum>
+                      </property>
+                      <property name="sizeHint">
+                        <size>
+                          <width>20</width>
+                          <height>20</height>
+                        </size>
+                      </property>
+                    </spacer>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="lblConteoProblemas">
+                      <property name="text">
+                        <string notr="true">0 problemas</string>
+                      </property>
+                    </widget>
+                  </item>
+                </layout>
+              </widget>
+            </item>
+            <item>
+              <widget class="QFrame" name="panelDialog">
+                <layout class="QHBoxLayout" name="fasesLayout">
+                  <property name="spacing">
+                    <number>16</number>
+                  </property>
+                  <property name="leftMargin">
+                    <number>15</number>
+                  </property>
+                  <property name="topMargin">
+                    <number>8</number>
+                  </property>
+                  <property name="rightMargin">
+                    <number>15</number>
+                  </property>
+                  <property name="bottomMargin">
+                    <number>8</number>
+                  </property>
+                  <item>
+                    <widget class="QLabel" name="lblLexicoProblemas">
+                      <property name="text">
+                        <string notr="true">○ Léxico</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="lblSintacticoProblemas">
+                      <property name="text">
+                        <string notr="true">○ Sintáctico</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="lblSemanticoProblemas">
+                      <property name="text">
+                        <string notr="true">○ Semántico</string>
+                      </property>
+                    </widget>
+                  </item>
+                </layout>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLabel" name="lblTituloErrores">
+                <property name="text">
+                  <string notr="true">DETALLES DEL ANÁLISIS</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QTableWidget" name="tblProblemas">
+                <property name="columnCount">
+                  <number>3</number>
+                </property>
+                <property name="rowCount">
+                  <number>0</number>
+                </property>
+                <property name="alternatingRowColors">
+                  <bool>true</bool>
+                </property>
+                <property name="editTriggers">
+                  <enum>QAbstractItemView::NoEditTriggers</enum>
+                </property>
+                <column>
+                  <property name="text">
+                    <string notr="true">Tipo</string>
+                  </property>
+                </column>
+                <column>
+                  <property name="text">
+                    <string notr="true">Línea</string>
+                  </property>
+                </column>
+                <column>
+                  <property name="text">
+                    <string notr="true">Descripción</string>
+                  </property>
+                </column>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLabel" name="lblDetalle">
+                <property name="text">
+                  <string notr="true">MENSAJE SELECCIONADO</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QPlainTextEdit" name="txtDetalleError">
+                <property name="readOnly">
+                  <bool>true</bool>
+                </property>
+                <property name="minimumSize">
+                  <size>
+                    <width>0</width>
+                    <height>130</height>
+                  </size>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <layout class="QHBoxLayout" name="accionesErrores">
+                <property name="spacing">
+                  <number>0</number>
+                </property>
+                <property name="leftMargin">
+                  <number>0</number>
+                </property>
+                <property name="topMargin">
+                  <number>0</number>
+                </property>
+                <property name="rightMargin">
+                  <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                  <number>0</number>
+                </property>
+                <item>
+                  <spacer name="spacer">
+                    <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                      <enum>QSizePolicy::Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                      <size>
+                        <width>20</width>
+                        <height>20</height>
+                      </size>
+                    </property>
+                  </spacer>
+                </item>
+                <item>
+                  <widget class="QPushButton" name="btnCerrarProblemas">
+                    <property name="text">
+                      <string notr="true">Cerrar</string>
+                    </property>
+                  </widget>
+                </item>
+              </layout>
+            </item>
+          </layout>
+        </widget>
+      </item>
+    </layout>
+  </widget>
+  <resources/>
+  <connections/>
+</ui>
