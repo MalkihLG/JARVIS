@@ -1,0 +1,111 @@
+sistema ControlAcademico {
+
+    fijo calificacionMinima: decimal = 7.0;
+
+    accion calcularPromedio(
+        calificacionUno: decimal,
+        calificacionDos: decimal,
+        calificacionTres: decimal
+    ) -> decimal {
+
+        var suma: decimal = calificacionUno + calificacionDos + calificacionTres;
+
+        devolver suma / 3;
+    }
+
+    accion determinarEstado(promedio: decimal) -> cadenita {
+
+        si (promedio >= calificacionMinima) {
+            devolver "APROBADO";
+        } sino {
+            devolver "REPROBADO";
+        }
+    }
+
+    accion calcularFactor(puntos: entero) -> entero {
+        devolver puntos ** 2;
+    }
+
+    mision principal {
+
+        imprimir("================================");
+        imprimir("SISTEMA DE CONTROL ACADEMICO");
+        imprimir("================================");
+
+        var estudiantes: lista[cadenita] = [
+            "ALBERTO",
+            "NICO",
+            "KAROL",
+            "ERNESTO"
+        ];
+
+        var promedios: lista[decimal] = [
+            9.0,
+            7.5,
+            6.0,
+            8.5
+        ];
+
+        var indice: entero = 0;
+        var aprobados: entero = 0;
+        var reprobados: entero = 0;
+        var sumaGeneral: decimal = 0.0;
+
+        imprimir("RESULTADOS POR ESTUDIANTE");
+
+        mientras (indice < 4) {
+
+            imprimir("ESTUDIANTE:");
+            imprimir(estudiantes[indice]);
+
+            imprimir("PROMEDIO:");
+            imprimir(promedios[indice]);
+
+            imprimir("ESTADO:");
+            imprimir(determinarEstado(promedios[indice]));
+
+            si (promedios[indice] >= calificacionMinima) {
+                aprobados += 1;
+            } sino {
+                reprobados += 1;
+            }
+
+            sumaGeneral += promedios[indice];
+
+            indice += 1;
+        }
+
+        imprimir("================================");
+        imprimir("ESTADISTICAS GENERALES");
+        imprimir("================================");
+
+        imprimir("TOTAL DE ESTUDIANTES:");
+        imprimir(indice);
+
+        imprimir("APROBADOS:");
+        imprimir(aprobados);
+
+        imprimir("REPROBADOS:");
+        imprimir(reprobados);
+
+        imprimir("PROMEDIO GENERAL:");
+        imprimir(sumaGeneral / 4);
+
+        imprimir("================================");
+        imprimir("PRUEBA DE FUNCIONES");
+        imprimir("================================");
+
+        imprimir("PROMEDIO DE TRES CALIFICACIONES:");
+        imprimir(calcularPromedio(9.0, 8.0, 10.0));
+
+        imprimir("POTENCIA:");
+        imprimir(calcularFactor(5));
+
+        imprimir("RESIDUO:");
+        imprimir(17 % 5);
+
+        imprimir("================================");
+        imprimir("SISTEMA ACADEMICO FINALIZADO");
+        imprimir("================================");
+    }
+}
