@@ -15,3 +15,12 @@ __pycache__/
 *.log
 *.tmp
 
+
+# Respaldos locales
+respaldos/
+
+# Archivo generado por Graphviz
+arboles/AST_JARVIS
+
+# Historial de ejecuciones
+registros.txt
