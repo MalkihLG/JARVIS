@@ -38,6 +38,18 @@ Entre las características de la versión actual se encuentran la declaración y
 
 El sistema también muestra mensajes de error durante el análisis y permite visualizar el árbol AST generado a partir del programa.
 
+
+## Prototipo de interfaz en Figma
+
+El diseño de la interfaz gráfica del compilador JARVIS se realizó en Figma, donde se desarrolló el prototipo visual del editor.
+
+El prototipo permite consultar el diseño de la interfaz y su distribución de componentes.
+
+**Enlace al prototipo:**
+
+[Ver prototipo de JARVIS en Figma](https://www.figma.com/design/3Hsktps1QHRyagkvfWuZQK/Prototipo-de-JARVIS?node-id=1-25)
+
+
 ## Interfaz gráfica
 
 Cuenta con un editor de código con pestañas, explorador de archivos, consola de resultados, tabla de variables y panel de análisis.
@@ -71,3 +83,4 @@ JARVIS guarda los resultados de las ejecuciones en `registros.txt`. Este archivo
 ## Objetivo
 
 Desarrollar un lenguaje de programación propio que permita comprender y aplicar las etapas de análisis léxico, análisis sintáctico, análisis semántico y ejecución, integrándolas en una aplicación gráfica que facilite las pruebas y la visualización de resultados.
+
