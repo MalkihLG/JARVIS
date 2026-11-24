@@ -65,6 +65,16 @@ def obtener_tipo(valor):
                 if operador == "/":
                     return "decimal"
 
+                if operador == "%":
+                    if ("decimal" in (izquierda, derecha)):
+                        return "decimal"
+                    return "entero"
+
+                if operador == "**":
+                    if ("decimal" in (izquierda, derecha)):
+                        return "decimal"
+                    return "entero"
+
                 if ("decimal" in (izquierda, derecha)):
                     return "decimal"
 
