@@ -1,6 +1,6 @@
 
 import ply.yacc as yacc
-from lexer import lexer
+from alexico import lexer
 
 # ==========================================
 # JARVIS - ANALIZADOR SINTACTICO
