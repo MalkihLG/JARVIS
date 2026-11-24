@@ -2,4 +2,8 @@
 name = "jarvis"
 version = "0.1.0"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "graphviz>=0.21",
+    "ply>=3.11",
+    "pyqt6>=6.12.1",
+]
